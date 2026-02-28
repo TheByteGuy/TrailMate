@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blue Hen Walks — UD Student Walking Community</title>
+  <title>TrailMate — Campus Walking Buddy System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -13,17 +13,18 @@
 
 <!-- NAV -->
 <nav id="navbar">
-  <a href="#" class="nav-logo">
-    <div class="nav-logo-icon">🐓</div>
-    <span class="nav-logo-text">Blue Hen Walks</span>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#how-it-works">How It Works</a></li>
-    <li><a href="#walks">Find Walks</a></li>
-    <li><a href="#safety">Safety</a></li>
-    <li><a href="#walks" class="nav-cta" onclick="openModal(); return false;">Post a Walk</a></li>
+    <li><a href="/" class="nav-active">Home</a></li>
+    <li><a href="/walks.html">Find Walks</a></li>
+    <li><a href="/safety.html">Safety</a></li>
+    <li><a href="/community.html">Community</a></li>
+    <li><a href="/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
-  <button class="nav-mobile-btn" onclick="openModal()">+ Post</button>
+  <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
 </nav>
 
 <!-- HERO -->
@@ -38,16 +39,16 @@
         University of Delaware
       </div>
       <h1 class="hero-title">
-        No Hen<br>
+        No One<br>
         Walks <span class="gold">Alone.</span>
       </h1>
       <p class="hero-subtitle">
-        Connect with fellow Blue Hens for safe, social walks around campus and Newark.
-        Build friendships, explore your city, and look out for each other.
+        TrailMate connects UD students for safe, peer-supported walks home at night.
+        No formal calls, no pressure — just fellow Blue Hens looking out for each other.
       </p>
       <div class="hero-actions">
-        <a href="#walks" class="btn-primary">🗺️ Find a Walk Partner</a>
-        <button class="btn-secondary" onclick="openModal()">+ Post a Walk</button>
+        <a href="/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
+        <a href="/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -98,7 +99,7 @@
           <div class="map-walker map-walker-1"></div>
           <div class="map-walker map-walker-2"></div>
         </div>
-        <div class="active-walkers" id="hero-live-walkers">
+        <div class="active-walkers">
           <div class="walker-row">
             <div class="walker-row-left">
               <div class="walker-avatar-sm avatar avatar-blue">MK</div>
@@ -159,63 +160,52 @@
   </div>
 </section>
 
-<!-- ACTIVE WALKS -->
-<section id="walks">
+<!-- FEATURES -->
+<section style="background:var(--off-white);padding:100px 40px;">
   <div class="section-inner">
-    <div class="walks-header">
-      <div>
-        <div class="section-label">Happening Now</div>
-        <h2 class="section-title">Active Walks</h2>
-      </div>
-      <button class="btn-primary" onclick="openModal()">+ Post a Walk</button>
-    </div>
-
-    <div class="filter-bar">
-      <button class="filter-btn active" data-filter="all">All Walks</button>
-      <button class="filter-btn" data-filter="night">🌙 Night Safety</button>
-      <button class="filter-btn" data-filter="morning">☀️ Morning</button>
-      <button class="filter-btn" data-filter="study">📚 Study Break</button>
-      <button class="filter-btn" data-filter="exercise">🏃 Exercise</button>
-      <button class="filter-btn" data-filter="casual">😊 Casual</button>
-    </div>
-
-    <div class="walks-grid" id="walks-grid">
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading walks...</p>
-      </div>
+    <div class="section-label">Everything You Need</div>
+    <h2 class="section-title">Built for student<br>safety &amp; community.</h2>
+    <div class="features-grid">
+      <a href="/walks.html" class="feature-card fade-up">
+        <div class="feature-card-icon">🗺️</div>
+        <div class="feature-card-title">Find Walks</div>
+        <div class="feature-card-desc">Browse active walk requests near campus. Filter by time, type, and route. Join in one tap.</div>
+        <div class="feature-card-link">Browse walks →</div>
+      </a>
+      <a href="/safety.html" class="feature-card fade-up" style="transition-delay:0.1s;">
+        <div class="feature-card-icon gold">⏱️</div>
+        <div class="feature-card-title">Safety Check-In</div>
+        <div class="feature-card-desc">Set a countdown timer for your walk. If you don't check in, your emergency contact is alerted.</div>
+        <div class="feature-card-link">Start check-in →</div>
+      </a>
+      <a href="/safety.html#routes" class="feature-card fade-up" style="transition-delay:0.2s;">
+        <div class="feature-card-icon green">📍</div>
+        <div class="feature-card-title">Safe Routes</div>
+        <div class="feature-card-desc">Pre-vetted campus routes rated by lighting, camera coverage, and UDPD patrol frequency.</div>
+        <div class="feature-card-link">View routes →</div>
+      </a>
+      <a href="/community.html" class="feature-card fade-up" style="transition-delay:0.3s;">
+        <div class="feature-card-icon purple">🏆</div>
+        <div class="feature-card-title">Community</div>
+        <div class="feature-card-desc">See who's walking the most, earn badges, and access campus safety tips from students.</div>
+        <div class="feature-card-link">Join community →</div>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- SAFETY FEATURES -->
-<section id="safety">
-  <div class="section-inner" style="position:relative;z-index:1;">
-    <div class="section-label" style="color:var(--gold);">Your Safety First</div>
-    <h2 class="section-title" style="color:white;">Built for trust,<br>designed for safety.</h2>
-    <p class="section-subtitle" style="color:rgba(255,255,255,0.6);">Every feature is built with your security in mind. We're a Blue Hen community — we look out for each other.</p>
-    <div class="safety-grid">
-      <div class="safety-card fade-up">
-        <div class="safety-icon-wrap">✉️</div>
-        <h3 class="safety-card-title">UD Email Verified</h3>
-        <p class="safety-card-desc">Only verified @udel.edu email addresses can create an account. Every person you walk with is a fellow Blue Hen.</p>
-      </div>
-      <div class="safety-card fade-up" style="transition-delay:0.1s;">
-        <div class="safety-icon-wrap">📍</div>
-        <h3 class="safety-card-title">Real-Time Location Sharing</h3>
-        <p class="safety-card-desc">Share your live location with trusted contacts during your walk. They can track your journey until you're safe.</p>
-        <span class="safety-card-badge">Coming Soon</span>
-      </div>
-      <div class="safety-card fade-up" style="transition-delay:0.2s;">
-        <div class="safety-icon-wrap">🆘</div>
-        <h3 class="safety-card-title">Emergency Contacts</h3>
-        <p class="safety-card-desc">Set up emergency contacts who are automatically notified if you don't check in. UDPD is one tap away.</p>
-      </div>
-      <div class="safety-card fade-up" style="transition-delay:0.3s;">
-        <div class="safety-icon-wrap">⭐</div>
-        <h3 class="safety-card-title">Community Ratings</h3>
-        <p class="safety-card-desc">After every walk, both parties rate the experience. Bad actors are identified and removed from the platform.</p>
-      </div>
+<!-- CTA BANNER -->
+<section style="background:var(--blue);padding:80px 40px;text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,210,0,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,210,0,0.05) 1px,transparent 1px);background-size:60px 60px;"></div>
+  <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
+    <div class="section-label" style="color:var(--gold);justify-content:center;">Ready to start?</div>
+    <h2 class="section-title" style="color:var(--white);">Find your walk<br>partner tonight.</h2>
+    <p style="color:rgba(255,255,255,0.65);font-size:17px;margin:16px 0 36px;line-height:1.6;">
+      Hundreds of UD students are already using TrailMate to get home safely. Join them.
+    </p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
+      <a href="/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
     </div>
   </div>
 </section>
@@ -225,35 +215,35 @@
   <div class="footer-inner">
     <div class="footer-top">
       <div>
-        <a href="#" class="nav-logo" style="margin-bottom:16px;display:flex;">
-          <div class="nav-logo-icon">🐓</div>
-          <span class="nav-logo-text" style="color:white;margin-left:10px;">Blue Hen Walks</span>
+        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+          <div class="nav-logo-icon">🥾</div>
+          <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
         </a>
-        <p class="footer-brand-desc">A student-built community platform for safe, social walks across the University of Delaware campus and beyond.</p>
+        <p class="footer-brand-desc">A student-built platform for safe, peer-supported walks across the University of Delaware campus and beyond.</p>
         <div class="footer-ud-badge">🏛️ University of Delaware Community</div>
       </div>
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-col-links">
-          <li><a href="#walks">Find a Walk</a></li>
-          <li><a href="#" onclick="openModal();return false;">Post a Walk</a></li>
-          <li><a href="#how-it-works">How It Works</a></li>
-          <li><a href="#safety">Safety Features</a></li>
+          <li><a href="/walks.html">Find a Walk</a></li>
+          <li><a href="/walks.html">Post a Walk</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/safety.html">Safety Features</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">Safety</div>
         <ul class="footer-col-links">
-          <li><a href="#">UDPD: (302) 831-2222</a></li>
-          <li><a href="#">Safety Guidelines</a></li>
-          <li><a href="#">Report Concern</a></li>
-          <li><a href="#">Community Standards</a></li>
+          <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
+          <li><a href="/safety.html">Safety Guidelines</a></li>
+          <li><a href="/safety.html#report">Report Concern</a></li>
+          <li><a href="/community.html">Community Standards</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">About</div>
         <ul class="footer-col-links">
-          <li><a href="#">Our Story</a></li>
+          <li><a href="/community.html">Our Story</a></li>
           <li><a href="#">Contact Us</a></li>
           <li><a href="#">Privacy Policy</a></li>
           <li><a href="#">Terms of Use</a></li>
@@ -261,89 +251,13 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 Blue Hen Walks — Made with 💙 by UD Students</span>
+      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
       <span>University of Delaware, Newark, DE 19716</span>
     </div>
   </div>
 </footer>
 
-<!-- POST A WALK MODAL -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Post a Walk 🚶</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <form id="walk-form" onsubmit="submitWalk(event)">
-      <div class="form-group">
-        <label class="form-label">Your Name</label>
-        <input type="text" class="form-input" id="f-name" placeholder="e.g. Alex Thompson" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">UD Email</label>
-        <input type="email" class="form-input" id="f-email" placeholder="yourname@udel.edu" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Year</label>
-        <select class="form-select" id="f-year">
-          <option value="Freshman">Freshman</option>
-          <option value="Sophomore">Sophomore</option>
-          <option value="Junior">Junior</option>
-          <option value="Senior">Senior</option>
-          <option value="Grad Student">Grad Student</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">From</label>
-          <input type="text" class="form-input" id="f-from" placeholder="e.g. The Green" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">To</label>
-          <input type="text" class="form-input" id="f-to" placeholder="e.g. Trabant" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Date &amp; Time</label>
-          <input type="datetime-local" class="form-input" id="f-time" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Max Group Size</label>
-          <select class="form-select" id="f-size">
-            <option value="2">2 people</option>
-            <option value="3">3 people</option>
-            <option value="4">4 people</option>
-            <option value="5">5 people</option>
-            <option value="6">6+ people</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Walk Type</label>
-        <select class="form-select" id="f-type">
-          <option value="casual">😊 Casual Stroll</option>
-          <option value="night">🌙 Night Safety Walk</option>
-          <option value="morning">☀️ Morning Walk</option>
-          <option value="study">📚 Study Break</option>
-          <option value="exercise">🏃 Exercise / Run</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes (optional)</label>
-        <textarea class="form-textarea" id="f-notes" placeholder="Anything walkers should know — pace, stops, meet-up spot..."></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn-submit" id="submit-btn">Post Walk 🚶</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
-
 <script src="app.js"></script>
 </body>
 </html>

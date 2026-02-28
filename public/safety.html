@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safety Hub — TrailMate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="safety.css">
+</head>
+<body class="safety-page">
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/walks.html">Find Walks</a></li>
+    <li><a href="/safety.html" class="nav-active">Safety</a></li>
+    <li><a href="/community.html">Community</a></li>
+    <li><a href="/walks.html" class="nav-cta">+ Post a Walk</a></li>
+  </ul>
+  <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-badge">🛡️ Safety First</div>
+    <h1 class="page-hero-title">Your <span class="gold">Safety Hub</span></h1>
+    <p class="page-hero-subtitle">Check-in timers, emergency contacts, pre-vetted campus routes, and a way to report concerns — all in one place.</p>
+  </div>
+</div>
+
+<!-- CHECK-IN TIMER -->
+<section class="safety-section" id="checkin">
+  <div class="section-inner">
+    <div class="section-label">Star Feature</div>
+    <h2 class="section-title">Safety Check-In Timer</h2>
+    <p class="section-subtitle">Start a countdown before your walk. If you don't check in when it expires, your contact is alerted.</p>
+
+    <div class="checkin-card" id="checkin-card">
+      <div class="checkin-inner">
+        <div class="checkin-header">
+          <div class="checkin-title">Walk Timer</div>
+          <div class="checkin-subtitle">Set how long your walk should take, then tap "I'm Safe" when you arrive.</div>
+        </div>
+
+        <!-- Timer Ring -->
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring-svg" width="160" height="160" viewBox="0 0 160 160">
+            <circle class="timer-ring-bg" cx="80" cy="80" r="70"/>
+            <circle class="timer-ring-fill" id="timer-ring" cx="80" cy="80" r="70"
+              stroke-dasharray="439.8" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-display-wrap">
+            <div class="timer-display" id="timer-display">--:--</div>
+            <div class="timer-label" id="timer-label">Select duration</div>
+          </div>
+        </div>
+
+        <!-- Duration Picker -->
+        <div class="duration-picker" id="duration-picker">
+          <button class="dur-btn" data-mins="15" onclick="selectDuration(15)">15 min</button>
+          <button class="dur-btn" data-mins="30" onclick="selectDuration(30)">30 min</button>
+          <button class="dur-btn" data-mins="45" onclick="selectDuration(45)">45 min</button>
+          <button class="dur-btn" data-mins="60" onclick="selectDuration(60)">1 hour</button>
+        </div>
+
+        <!-- Contact fields -->
+        <div class="checkin-form" id="checkin-form-fields">
+          <input type="text" class="checkin-input" id="ci-name" placeholder="Your name (optional)">
+          <input type="text" class="checkin-input" id="ci-contact" placeholder="Emergency contact name (optional)">
+        </div>
+
+        <!-- Actions -->
+        <div class="checkin-actions">
+          <button class="btn-start-checkin" id="btn-start" onclick="startCheckIn()" disabled>
+            ▶ Start Timer
+          </button>
+          <button class="btn-safe" id="btn-safe" onclick="markSafe()">
+            ✓ I'm Safe!
+          </button>
+          <button class="btn-cancel-checkin" id="btn-cancel-ci" onclick="cancelCheckIn()">
+            Cancel
+          </button>
+        </div>
+
+        <div class="checkin-status" id="checkin-status"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMERGENCY CONTACTS -->
+<section class="safety-section" id="emergency">
+  <div class="section-inner">
+    <div class="section-label">Always Ready</div>
+    <h2 class="section-title">Emergency Contacts</h2>
+    <p class="section-subtitle">Save these numbers. UDPD is one tap away, 24/7.</p>
+
+    <div class="emergency-grid">
+      <div class="emergency-card urgent">
+        <div class="emergency-icon">🚨</div>
+        <div class="emergency-name">Emergency / 911</div>
+        <div class="emergency-desc">For immediate threats to life or safety. Fire, medical emergency, or active crime.</div>
+        <a href="tel:911" class="emergency-number">Call 911</a>
+      </div>
+      <div class="emergency-card urgent">
+        <div class="emergency-icon">👮</div>
+        <div class="emergency-name">UD Police (UDPD)</div>
+        <div class="emergency-desc">Non-emergency campus safety. Patrols 24/7. Also offers free safety escorts on request.</div>
+        <a href="tel:3028312222" class="emergency-number">📞 (302) 831-2222</a>
+      </div>
+      <div class="emergency-card">
+        <div class="emergency-icon">🤝</div>
+        <div class="emergency-name">UD Safety Escort</div>
+        <div class="emergency-desc">Free walking escort anywhere on campus. Call UDPD and ask for a safety escort — no questions asked.</div>
+        <a href="tel:3028312222" class="emergency-number">📞 (302) 831-2222</a>
+      </div>
+      <div class="emergency-card">
+        <div class="emergency-icon">💬</div>
+        <div class="emergency-name">UD Counseling Center</div>
+        <div class="emergency-desc">Mental health support for UD students. After-hours crisis line available 24/7.</div>
+        <a href="tel:3028312141" class="emergency-number">📞 (302) 831-2141</a>
+      </div>
+      <div class="emergency-card">
+        <div class="emergency-icon">🏥</div>
+        <div class="emergency-name">UD Student Health</div>
+        <div class="emergency-desc">Medical care for UD students. Located at 302 Chrysler Hall North on East Campus.</div>
+        <a href="tel:3028312226" class="emergency-number">📞 (302) 831-2226</a>
+      </div>
+      <div class="emergency-card">
+        <div class="emergency-icon">🆘</div>
+        <div class="emergency-name">Crisis Text Line</div>
+        <div class="emergency-desc">Text-based emotional support 24/7. Text HOME to 741741 to reach a trained counselor.</div>
+        <a href="sms:741741?body=HOME" class="emergency-number">Text HOME to 741741</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAFE ROUTES -->
+<section class="safety-section" id="routes">
+  <div class="section-inner">
+    <div class="section-label">Pre-Vetted Paths</div>
+    <h2 class="section-title">Safe Campus Routes</h2>
+    <p class="section-subtitle">These routes are rated by lighting quality, camera coverage, and UDPD patrol frequency.</p>
+
+    <div class="routes-list" id="routes-list">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading routes...</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORT A CONCERN -->
+<section class="safety-section report-section" id="report">
+  <div class="section-inner" style="position:relative;z-index:1;">
+    <div class="section-label" style="color:var(--gold);">Community Watchdog</div>
+    <h2 class="section-title" style="color:var(--white);">Report a Concern</h2>
+    <p class="section-subtitle" style="color:rgba(255,255,255,0.6);">See something that feels off? Help keep campus safe by letting us know.</p>
+
+    <div class="report-card">
+      <form id="report-form" onsubmit="submitReport(event)">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="report-form-label">Type of Concern</label>
+          <select class="report-form-select" id="r-type">
+            <option value="">Select a type...</option>
+            <option value="suspicious">Suspicious person or activity</option>
+            <option value="unsafe-area">Unsafe area (poor lighting, hazard)</option>
+            <option value="maintenance">Maintenance issue (broken light, blocked path)</option>
+            <option value="incident">Incident or near-miss</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="report-form-label">Location</label>
+          <input type="text" class="report-form-input" id="r-location" placeholder="e.g. Near The Green, behind Gore Hall...">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="report-form-label">Description <span style="color:rgba(255,255,255,0.4);font-weight:400;">(required)</span></label>
+          <textarea class="report-form-textarea" id="r-description" placeholder="Describe what you saw or experienced..." required></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="report-form-label">Your Contact <span style="color:rgba(255,255,255,0.4);font-weight:400;">(optional — only if you want follow-up)</span></label>
+          <input type="email" class="report-form-input" id="r-contact" placeholder="yourname@udel.edu">
+        </div>
+        <button type="submit" class="btn-report" id="report-btn">Submit Report</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+          <div class="nav-logo-icon">🥾</div>
+          <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
+        </a>
+        <p class="footer-brand-desc">A student-built platform for safe, peer-supported walks across the University of Delaware campus and beyond.</p>
+        <div class="footer-ud-badge">🏛️ University of Delaware Community</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-col-links">
+          <li><a href="/walks.html">Find a Walk</a></li>
+          <li><a href="/walks.html">Post a Walk</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/safety.html">Safety Features</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Safety</div>
+        <ul class="footer-col-links">
+          <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
+          <li><a href="/safety.html">Safety Guidelines</a></li>
+          <li><a href="/safety.html#report">Report Concern</a></li>
+          <li><a href="/community.html">Community Standards</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">About</div>
+        <ul class="footer-col-links">
+          <li><a href="/community.html">Our Story</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
+      <span>University of Delaware, Newark, DE 19716</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="app.js"></script>
+<script src="safety.js"></script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+/* safety.css — styles for safety.html only */
+
+/* ---- LAYOUT ---- */
+.safety-page { background: var(--off-white); }
+.safety-section { padding: 80px 40px; }
+.safety-section:nth-child(even) { background: var(--white); }
+
+/* ---- CHECK-IN TIMER ---- */
+.checkin-card {
+  background: var(--blue); border-radius: var(--radius-lg);
+  padding: 48px; position: relative; overflow: hidden; max-width: 720px; margin: 0 auto;
+}
+.checkin-card::before {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,210,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,210,0,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.checkin-inner { position: relative; z-index: 1; }
+.checkin-header { text-align: center; margin-bottom: 36px; }
+.checkin-title {
+  font-family: var(--font-display); font-size: 28px; font-weight: 800;
+  color: var(--white); margin-bottom: 8px;
+}
+.checkin-subtitle { font-size: 15px; color: rgba(255,255,255,0.65); }
+
+/* Timer ring */
+.timer-ring-wrap {
+  display: flex; justify-content: center; margin-bottom: 32px;
+  position: relative;
+}
+.timer-ring-svg { transform: rotate(-90deg); }
+.timer-ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 8; }
+.timer-ring-fill {
+  fill: none; stroke: var(--gold); stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 502;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+.timer-display-wrap {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.timer-display {
+  font-family: var(--font-display); font-size: 44px; font-weight: 800;
+  color: var(--white); line-height: 1;
+}
+.timer-label { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+/* Duration picker */
+.duration-picker { display: flex; gap: 10px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+.dur-btn {
+  padding: 10px 20px; border-radius: 100px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.dur-btn:hover, .dur-btn.active {
+  background: rgba(255,210,0,0.15); border-color: var(--gold);
+  color: var(--gold);
+}
+.dur-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Contact field */
+.checkin-form { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.checkin-input {
+  flex: 1; min-width: 160px; padding: 12px 16px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm); background: rgba(255,255,255,0.08);
+  color: var(--white); font-family: var(--font-body); font-size: 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.checkin-input::placeholder { color: rgba(255,255,255,0.4); }
+.checkin-input:focus { border-color: var(--gold); }
+
+/* Action buttons */
+.checkin-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-start-checkin {
+  background: var(--gold); color: var(--blue-dark);
+  border: none; padding: 14px 32px; border-radius: 100px;
+  font-family: var(--font-body); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-start-checkin:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,210,0,0.35); }
+.btn-start-checkin:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-safe {
+  background: #16a34a; color: white;
+  border: none; padding: 14px 32px; border-radius: 100px;
+  font-family: var(--font-body); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; display: none;
+}
+.btn-safe:hover { background: #15803d; transform: translateY(-2px); }
+.btn-cancel-checkin {
+  background: transparent; color: rgba(255,255,255,0.7);
+  border: 1.5px solid rgba(255,255,255,0.2); padding: 14px 24px;
+  border-radius: 100px; font-family: var(--font-body);
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: none;
+}
+.btn-cancel-checkin:hover { border-color: rgba(255,255,255,0.5); color: white; }
+
+/* Timer states */
+.checkin-card.state-running .btn-start-checkin { display: none; }
+.checkin-card.state-running .btn-safe,
+.checkin-card.state-running .btn-cancel-checkin { display: inline-flex; }
+.checkin-card.state-alert { animation: alertPulse 1s ease infinite; }
+.checkin-card.state-alert .timer-ring-fill { stroke: #ef4444; }
+.checkin-card.state-alert .timer-display { color: #fca5a5; }
+@keyframes alertPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50% { box-shadow: 0 0 0 12px rgba(239,68,68,0.2); }
+}
+.checkin-status {
+  text-align: center; margin-top: 20px;
+  font-size: 14px; color: rgba(255,255,255,0.6);
+  min-height: 20px;
+}
+.checkin-status.alert { color: #fca5a5; font-weight: 700; }
+.checkin-status.safe { color: #86efac; font-weight: 700; }
+
+/* ---- EMERGENCY CONTACTS ---- */
+.emergency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; margin-top: 40px; }
+.emergency-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); padding: 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.emergency-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.emergency-card.urgent { border-color: #ef4444; border-width: 2px; }
+.emergency-icon { font-size: 28px; }
+.emergency-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--gray-900); }
+.emergency-desc { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
+.emergency-number {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--blue); color: white;
+  padding: 10px 18px; border-radius: 100px;
+  font-size: 14px; font-weight: 700; text-decoration: none;
+  transition: background 0.2s; margin-top: auto;
+}
+.emergency-number:hover { background: var(--blue-light); }
+.emergency-card.urgent .emergency-number { background: #ef4444; }
+.emergency-card.urgent .emergency-number:hover { background: #dc2626; }
+
+/* ---- SAFE ROUTES ---- */
+.routes-list { display: flex; flex-direction: column; gap: 12px; margin-top: 40px; }
+.route-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); padding: 20px 24px;
+  display: flex; align-items: center; gap: 20px;
+  transition: box-shadow 0.2s;
+}
+.route-card:hover { box-shadow: var(--shadow); }
+.route-icon { font-size: 24px; flex-shrink: 0; }
+.route-info { flex: 1; }
+.route-name { font-weight: 700; font-size: 15px; color: var(--gray-900); margin-bottom: 4px; }
+.route-notes { font-size: 13px; color: var(--gray-400); }
+.route-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.route-badge {
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+}
+.badge-excellent { background: #d1fae5; color: #065f46; }
+.badge-good { background: #fef3c7; color: #92400e; }
+.badge-camera { background: #e0f2fe; color: #075985; }
+.badge-popular { background: rgba(0,83,159,0.08); color: var(--blue); }
+.route-distance {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--gray-700); flex-shrink: 0;
+}
+
+/* ---- REPORT FORM ---- */
+.report-section { background: var(--blue); }
+.report-card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-lg); padding: 40px; max-width: 640px;
+  margin: 40px auto 0; position: relative; z-index: 1;
+}
+.report-form-label {
+  display: block; font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.8); margin-bottom: 8px; letter-spacing: 0.02em;
+}
+.report-form-input, .report-form-select, .report-form-textarea {
+  width: 100%; padding: 12px 16px; border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm); background: rgba(255,255,255,0.08);
+  color: var(--white); font-family: var(--font-body); font-size: 14px;
+  outline: none; transition: border-color 0.2s; margin-bottom: 20px;
+}
+.report-form-input::placeholder,
+.report-form-textarea::placeholder { color: rgba(255,255,255,0.35); }
+.report-form-input:focus,
+.report-form-select:focus,
+.report-form-textarea:focus { border-color: var(--gold); }
+.report-form-textarea { resize: vertical; min-height: 100px; }
+.report-form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center;
+  cursor: pointer;
+}
+.report-form-select option { background: var(--blue-dark); color: white; }
+.btn-report {
+  background: var(--gold); color: var(--blue-dark); border: none;
+  padding: 14px 32px; border-radius: 100px; font-family: var(--font-body);
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%;
+}
+.btn-report:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,210,0,0.35); }
+.btn-report:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---- MOBILE ---- */
+@media (max-width: 768px) {
+  .safety-section { padding: 60px 20px; }
+  .checkin-card { padding: 32px 24px; }
+  .emergency-grid { grid-template-columns: 1fr 1fr; }
+  .route-card { flex-wrap: wrap; }
+  .report-card { padding: 28px 20px; }
+}
+@media (max-width: 480px) {
+  .emergency-grid { grid-template-columns: 1fr; }
+}

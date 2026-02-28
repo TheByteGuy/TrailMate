@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Walks — TrailMate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="walks.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/walks.html" class="nav-active">Find Walks</a></li>
+    <li><a href="/safety.html">Safety</a></li>
+    <li><a href="/community.html">Community</a></li>
+    <li><a href="#" class="nav-cta" onclick="openModal(); return false;">+ Post a Walk</a></li>
+  </ul>
+  <button class="nav-mobile-btn" onclick="openModal()">+ Post</button>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-badge">🗺️ Active Now</div>
+    <h1 class="page-hero-title">Find a <span class="gold">Walk Partner</span></h1>
+    <p class="page-hero-subtitle">Browse live walk requests from verified UD students. Join a group or post your own route in seconds.</p>
+  </div>
+</div>
+
+<!-- WALKS SECTION -->
+<div id="walks-section">
+  <div class="section-inner">
+    <div class="walks-header">
+      <div>
+        <div class="section-label">Happening Now</div>
+        <h2 class="section-title" style="font-size:clamp(24px,3vw,36px);">Active Walks</h2>
+      </div>
+      <button class="btn-primary" onclick="openModal()">+ Post a Walk</button>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All Walks</button>
+      <button class="filter-btn" data-filter="night">🌙 Night Safety</button>
+      <button class="filter-btn" data-filter="morning">☀️ Morning</button>
+      <button class="filter-btn" data-filter="study">📚 Study Break</button>
+      <button class="filter-btn" data-filter="exercise">🏃 Exercise</button>
+      <button class="filter-btn" data-filter="casual">😊 Casual</button>
+    </div>
+
+    <div class="walks-grid" id="walks-grid">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading walks...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+          <div class="nav-logo-icon">🥾</div>
+          <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
+        </a>
+        <p class="footer-brand-desc">A student-built platform for safe, peer-supported walks across the University of Delaware campus and beyond.</p>
+        <div class="footer-ud-badge">🏛️ University of Delaware Community</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-col-links">
+          <li><a href="/walks.html">Find a Walk</a></li>
+          <li><a href="#" onclick="openModal();return false;">Post a Walk</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/safety.html">Safety Features</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Safety</div>
+        <ul class="footer-col-links">
+          <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
+          <li><a href="/safety.html">Safety Guidelines</a></li>
+          <li><a href="/safety.html#report">Report Concern</a></li>
+          <li><a href="/community.html">Community Standards</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">About</div>
+        <ul class="footer-col-links">
+          <li><a href="/community.html">Our Story</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
+      <span>University of Delaware, Newark, DE 19716</span>
+    </div>
+  </div>
+</footer>
+
+<!-- POST A WALK MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Post a Walk 🚶</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <form id="walk-form" onsubmit="submitWalk(event)">
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input type="text" class="form-input" id="f-name" placeholder="e.g. Alex Thompson" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">UD Email</label>
+        <input type="email" class="form-input" id="f-email" placeholder="yourname@udel.edu" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <select class="form-select" id="f-year">
+          <option value="Freshman">Freshman</option>
+          <option value="Sophomore">Sophomore</option>
+          <option value="Junior">Junior</option>
+          <option value="Senior">Senior</option>
+          <option value="Grad Student">Grad Student</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <input type="text" class="form-input" id="f-from" placeholder="e.g. The Green" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input type="text" class="form-input" id="f-to" placeholder="e.g. Trabant" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date &amp; Time</label>
+          <input type="datetime-local" class="form-input" id="f-time" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Group Size</label>
+          <select class="form-select" id="f-size">
+            <option value="2">2 people</option>
+            <option value="3">3 people</option>
+            <option value="4">4 people</option>
+            <option value="5">5 people</option>
+            <option value="6">6+ people</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Walk Type</label>
+        <select class="form-select" id="f-type">
+          <option value="casual">😊 Casual Stroll</option>
+          <option value="night">🌙 Night Safety Walk</option>
+          <option value="morning">☀️ Morning Walk</option>
+          <option value="study">📚 Study Break</option>
+          <option value="exercise">🏃 Exercise / Run</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-textarea" id="f-notes" placeholder="Anything walkers should know — pace, stops, meet-up spot..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-submit" id="submit-btn">Post Walk 🚶</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="app.js"></script>
+<script src="walks.js"></script>
+</body>
+</html>

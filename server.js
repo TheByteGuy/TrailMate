@@ -133,9 +133,44 @@ let walks = [
 
 let nextId = 7;
 
-// ---- API Routes ----
+// ---- Community Data ----
+const communityStats = {
+  activeStudents: 342,
+  walksCompleted: 1247,
+  avgRating: 4.9,
+  safeNights: 1247
+};
 
-// GET all walks (optional filter via query param ?type=night)
+const leaderboard = [
+  { rank: 1, name: 'Maya K.',   initials: 'MK', avatarClass: 'avatar-blue',   walks: 47, rating: 5.0, year: 'Junior',       badge: 'Trail Guide' },
+  { rank: 2, name: 'Jordan R.', initials: 'JR', avatarClass: 'avatar-teal',   walks: 38, rating: 4.9, year: 'Sophomore',    badge: 'Night Owl' },
+  { rank: 3, name: 'Sam T.',    initials: 'ST', avatarClass: 'avatar-purple', walks: 31, rating: 5.0, year: 'Senior',       badge: 'Campus Legend' },
+  { rank: 4, name: 'Priya M.',  initials: 'PM', avatarClass: 'avatar-rose',   walks: 28, rating: 4.8, year: 'Freshman',     badge: 'Rising Star' },
+  { rank: 5, name: 'Chris B.',  initials: 'CB', avatarClass: 'avatar-orange', walks: 25, rating: 4.9, year: 'Grad Student', badge: 'Early Bird' },
+  { rank: 6, name: 'Leila A.',  initials: 'LA', avatarClass: 'avatar-green',  walks: 21, rating: 4.8, year: 'Junior',       badge: 'Social Butterfly' },
+];
+
+const campusTips = [
+  { icon: '💡', title: 'Stick to lit paths',   body: 'Main Street and The Green are brightly lit at night. Avoid cutting through wooded areas after dark.' },
+  { icon: '📱', title: 'Share your location',  body: 'Drop a pin to a trusted friend when you head out. A quick "walking home now" text goes a long way.' },
+  { icon: '🎧', title: 'Stay aware',            body: 'Keep one earbud out at night. Being able to hear your surroundings is key to staying safe.' },
+  { icon: '👥', title: 'Walk in groups',        body: 'Groups of 3+ are significantly less likely to be targeted. Use TrailMate to find walk partners.' },
+  { icon: '🔦', title: 'Be visible',            body: 'Light-colored clothing and reflective gear makes you visible to drivers on Academy and Main.' },
+  { icon: '📞', title: 'Save UDPD',             body: 'Save (302) 831-2222 in your phone. UDPD also offers a free safety escort service on request.' },
+];
+
+const safeRoutes = [
+  { id: 1, name: 'The Green → Gore Hall',        distance: '0.3 mi', lighting: 'Excellent', cameras: true,  popular: true,  notes: 'Well-lit all night, security cameras throughout' },
+  { id: 2, name: 'Trabant → Pencader',           distance: '0.5 mi', lighting: 'Good',      cameras: true,  popular: true,  notes: 'Busy route, frequently patrolled by UDPD' },
+  { id: 3, name: 'Main St → Morris Library',     distance: '0.4 mi', lighting: 'Excellent', cameras: true,  popular: false, notes: 'Busy commercial street, always well-lit' },
+  { id: 4, name: 'Rodney Complex → Russell Hall',distance: '0.6 mi', lighting: 'Good',      cameras: false, popular: true,  notes: 'Stick to paved paths through central campus' },
+  { id: 5, name: 'Academy St → Gore Hall',       distance: '0.7 mi', lighting: 'Good',      cameras: true,  popular: false, notes: 'Use the main sidewalk along Academy' },
+  { id: 6, name: 'Sharp Lab → Perkins Center',   distance: '0.4 mi', lighting: 'Excellent', cameras: true,  popular: true,  notes: 'Well-lit engineering quad route' },
+];
+
+// ---- Walk API Routes ----
+
+// GET all walks (optional filter via ?type=night)
 app.get('/api/walks', (req, res) => {
   const { type } = req.query;
   const result = type && type !== 'all'
@@ -155,23 +190,20 @@ app.get('/api/walks/:id', (req, res) => {
 app.post('/api/walks', (req, res) => {
   const { name, email, year, from, to, isoTime, maxSpots, type, notes } = req.body;
 
-  // Validate UD email
   if (!email || !email.toLowerCase().endsWith('@udel.edu')) {
     return res.status(400).json({ error: 'A valid @udel.edu email is required.' });
   }
-
   if (!name || !from || !to || !isoTime || !maxSpots || !type) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
   const typeMap = {
-    casual:   { label: '😊 Casual',       badge: 'badge-casual',   filter: 'casual'   },
-    night:    { label: '🌙 Night Safety',  badge: 'badge-night',    filter: 'night'    },
-    morning:  { label: '☀️ Morning',       badge: 'badge-morning',  filter: 'morning'  },
-    study:    { label: '📚 Study Break',   badge: 'badge-study',    filter: 'study'    },
-    exercise: { label: '🏃 Exercise',      badge: 'badge-exercise', filter: 'exercise' }
+    casual:   { label: '😊 Casual',      badge: 'badge-casual',   filter: 'casual'   },
+    night:    { label: '🌙 Night Safety', badge: 'badge-night',    filter: 'night'    },
+    morning:  { label: '☀️ Morning',      badge: 'badge-morning',  filter: 'morning'  },
+    study:    { label: '📚 Study Break',  badge: 'badge-study',    filter: 'study'    },
+    exercise: { label: '🏃 Exercise',     badge: 'badge-exercise', filter: 'exercise' }
   };
-
   const tagsByType = {
     night:    ['Night Walk', 'Safe Route'],
     morning:  ['Morning Walk', 'Fresh Start'],
@@ -179,7 +211,6 @@ app.post('/api/walks', (req, res) => {
     exercise: ['Exercise', 'Active'],
     casual:   ['Casual', 'Social']
   };
-
   const avatarClasses = ['avatar-blue', 'avatar-teal', 'avatar-purple', 'avatar-rose', 'avatar-orange', 'avatar-green'];
   const parts = name.trim().split(' ');
   const initials = parts.length >= 2
@@ -191,7 +222,6 @@ app.post('/api/walks', (req, res) => {
     dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
   const typeInfo = typeMap[type] || typeMap.casual;
-
   const newWalk = {
     id: nextId++,
     name: name.trim(),
@@ -221,15 +251,12 @@ app.post('/api/walks', (req, res) => {
 app.post('/api/walks/:id/join', (req, res) => {
   const walk = walks.find(w => w.id === parseInt(req.params.id));
   if (!walk) return res.status(404).json({ error: 'Walk not found' });
-
-  const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-  if (spotsLeft <= 0) return res.status(409).json({ error: 'Walk is full.' });
-
+  if (walk.maxSpots - walk.joinedSpots - 1 <= 0) return res.status(409).json({ error: 'Walk is full.' });
   walk.joinedSpots++;
   res.json({ success: true, walk });
 });
 
-// DELETE a walk (admin / poster only — simplified, no auth)
+// DELETE a walk
 app.delete('/api/walks/:id', (req, res) => {
   const index = walks.findIndex(w => w.id === parseInt(req.params.id));
   if (index === -1) return res.status(404).json({ error: 'Walk not found' });
@@ -237,11 +264,37 @@ app.delete('/api/walks/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Serve the frontend for any other route
+// ---- Community API Routes ----
+
+app.get('/api/stats', (req, res) => {
+  res.json({
+    ...communityStats,
+    walksCompleted: communityStats.walksCompleted + Math.max(0, walks.length - 6)
+  });
+});
+
+app.get('/api/leaderboard', (req, res) => res.json(leaderboard));
+
+app.get('/api/tips', (req, res) => res.json(campusTips));
+
+app.get('/api/routes', (req, res) => res.json(safeRoutes));
+
+// ---- Safety API Routes ----
+
+app.post('/api/report', (req, res) => {
+  const { type, description, location, contact } = req.body;
+  if (!type || !description) {
+    return res.status(400).json({ error: 'Type and description are required.' });
+  }
+  console.log('[SAFETY REPORT]', { type, description, location, contact, at: new Date().toISOString() });
+  res.json({ success: true, message: 'Report received. Thank you for keeping TrailMate safe.' });
+});
+
+// Serve the frontend for unknown routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🐓 Blue Hen Walks running at http://localhost:${PORT}\n`);
+  console.log(`\n🥾 TrailMate running at http://localhost:${PORT}\n`);
 });

@@ -17,20 +17,22 @@
   <!-- CSS -->
    <link rel="stylesheet" href="styles.css" />
    <link rel = "stylesheet" href = "walks.css" />
+   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  
+  <!-- Mapbox GL JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
   <!-- Include Supabase client library before your walks.js -->
- <script type="module">
+    <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Initialize Supabase
+  // Initialize Supabase
     const supabase = createClient(
       'https://zsujhugkllbnqidswkgt.supabase.co',
       'your-anon-key'
     );
 
     console.log('Supabase initialized:', supabase);
-
-    // Your walks.js code can now safely use `supabase`
   </script>
   
   <!-- Your module (after globals) -->

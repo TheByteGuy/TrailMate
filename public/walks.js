@@ -1,26 +1,26 @@
 /* walks.js — walks listing, filtering, modal, and join logic for walks.html */
 
+// ---- CONFIG ----
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+export const supabase = createClient(
+  'https://zsujhugkllbnqidswkgt.supabase.co',
+  'your-anon-key'
+);
+
+// ---- STATE ----
 let currentFilter = 'all';
 const joinedWalks = new Set();
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.js';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// walks.js or a separate config file
-walkMap = new mapboxgl.Map({
-  container: 'walk-map-container',
-  style: 'mapbox://styles/mapbox/streets-v12',
-  center: [walk.fromLng, walk.fromLat],
-  zoom: 15
-});
+let walkMap = null;
 
 // ---- MODAL ----
 function openModal() {
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   const dt = new Date(Date.now() + 30 * 60 * 1000);
-  const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
   document.getElementById('f-time').value = local;
 }
 
@@ -29,8 +29,8 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('modal-overlay').addEventListener('click', function (e) {
-  if (e.target === this) closeModal();
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
 });
 
 // ---- FILTERS ----
@@ -62,9 +62,10 @@ async function loadWalks(filter = 'all') {
   }
 }
 
+// ---- RENDER WALKS ----
 function renderWalks(walks) {
   const grid = document.getElementById('walks-grid');
-  if (walks.length === 0) {
+  if (!walks || walks.length === 0) {
     grid.innerHTML = `
       <div class="loading-state" style="grid-column:1/-1;">
         <div style="font-size:48px;">🚶</div>
@@ -74,21 +75,21 @@ function renderWalks(walks) {
       </div>`;
     return;
   }
-  grid.innerHTML = walks.map(walk => buildCardHTML(walk)).join('');
+  grid.innerHTML = walks.map(buildCardHTML).join('');
 }
 
 function buildCardHTML(walk) {
   const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-  const fillPct   = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
-  const isFull    = spotsLeft <= 0;
-  const isJoined  = joinedWalks.has(walk.id);
-  const tagsHTML  = walk.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  const fillPct = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
+  const isFull = spotsLeft <= 0;
+  const isJoined = joinedWalks.has(walk.id);
+  const tagsHTML = walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || '';
   const notesHTML = walk.notes ? `<p class="walk-notes">"${walk.notes}"</p>` : '';
 
   let btnClass = 'btn-join';
-  let btnText  = 'Join Walk →';
-  if (isJoined)    { btnClass += ' joined'; btnText = '✓ Joined!'; }
-  else if (isFull) { btnClass += ' full';   btnText = 'Walk Full'; }
+  let btnText = 'Join Walk →';
+  if (isJoined) { btnClass += ' joined'; btnText = '✓ Joined!'; }
+  else if (isFull) { btnClass += ' full'; btnText = 'Walk Full'; }
 
   return `
     <div class="walk-card" id="walk-${walk.id}">
@@ -135,13 +136,7 @@ function buildCardHTML(walk) {
 
       <div class="walk-card-footer">
         <span class="walk-card-time">Posted recently</span>
-        <button
-          class="${btnClass}"
-          id="join-btn-${walk.id}"
-          onclick="joinWalk(${walk.id})"
-          ${(isFull || isJoined) ? 'disabled' : ''}
-        >${btnText}</button>
-
+        <button class="${btnClass}" id="join-btn-${walk.id}" onclick="joinWalk(${walk.id})" ${(isFull || isJoined) ? 'disabled' : ''}>${btnText}</button>
         ${isJoined ? `<button class="btn-view-map" onclick="openWalkMap(${walk.id})">View Map 🗺️</button>` : ''}
       </div>
     </div>`;
@@ -150,6 +145,7 @@ function buildCardHTML(walk) {
 // ---- JOIN WALK ----
 async function joinWalk(id) {
   if (joinedWalks.has(id)) return;
+
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
 
@@ -174,7 +170,7 @@ async function joinWalk(id) {
     if (!res.ok) throw new Error(data.error || 'Could not join walk');
 
     joinedWalks.add(id);
-    renderWalks([data.walk]); // update walk card
+    renderWalks([data.walk]);
     showToast(`🎉 You joined ${data.walk.name}'s walk!`, `${data.walk.from} → ${data.walk.to} · ${data.walk.time}`);
   } catch (err) {
     alert(err.message);
@@ -182,19 +178,19 @@ async function joinWalk(id) {
     btn.textContent = 'Join Walk →';
   }
 }
+
 // ---- SUBMIT WALK ----
 async function submitWalk(e) {
   e.preventDefault();
-
-  const name     = document.getElementById('f-name').value.trim();
-  const email    = document.getElementById('f-email').value.trim();
-  const year     = document.getElementById('f-year').value;
-  const from     = document.getElementById('f-from').value.trim();
-  const to       = document.getElementById('f-to').value.trim();
-  const isoTime  = document.getElementById('f-time').value;
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const year = document.getElementById('f-year').value;
+  const from = document.getElementById('f-from').value.trim();
+  const to = document.getElementById('f-to').value.trim();
+  const isoTime = document.getElementById('f-time').value;
   const maxSpots = document.getElementById('f-size').value;
-  const type     = document.getElementById('f-type').value;
-  const notes    = document.getElementById('f-notes').value.trim();
+  const type = document.getElementById('f-type').value;
+  const notes = document.getElementById('f-notes').value.trim();
 
   if (!email.toLowerCase().endsWith('@udel.edu')) {
     showToast('⚠️ UD Email Required', 'Please use your @udel.edu email address.', true);
@@ -206,13 +202,12 @@ async function submitWalk(e) {
   submitBtn.textContent = 'Posting...';
 
   try {
-    const res  = await fetch('/api/walks', {
+    const res = await fetch('/api/walks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, year, from, to, isoTime, maxSpots, type, notes })
     });
     const data = await res.json();
-
     if (!res.ok) {
       showToast('⚠️ ' + (data.error || 'Could not post walk.'), '', true);
       return;
@@ -234,14 +229,11 @@ async function submitWalk(e) {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Post Walk 🚶';
   }
-} 
+}
 
 // ---- MAPBOX ----
-let walkMap = null;
-
 async function openWalkMap(walkId) {
   try {
-    // fetch latest walk from Supabase anon key (public read allowed)
     const res = await fetch(`/api/walks/${walkId}`);
     const walk = await res.json();
 
@@ -259,8 +251,15 @@ async function openWalkMap(walkId) {
 
     walkMap.addControl(new mapboxgl.NavigationControl());
 
-    new mapboxgl.Marker({ color: 'blue' }).setLngLat([walk.fromLng, walk.fromLat]).setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`)).addTo(walkMap);
-    new mapboxgl.Marker({ color: 'red' }).setLngLat([walk.toLng, walk.toLat]).setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`)).addTo(walkMap);
+    new mapboxgl.Marker({ color: 'blue' })
+      .setLngLat([walk.fromLng, walk.fromLat])
+      .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
+      .addTo(walkMap);
+
+    new mapboxgl.Marker({ color: 'red' })
+      .setLngLat([walk.toLng, walk.toLat])
+      .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
+      .addTo(walkMap);
 
     drawWalkRoute(walk.fromLng, walk.fromLat, walk.toLng, walk.toLat);
   } catch (err) {

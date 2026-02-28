@@ -8,7 +8,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // walks.js or a separate config file
-mapboxgl.accessToken = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
 walkMap = new mapboxgl.Map({
   container: 'walk-map-container',
   style: 'mapbox://styles/mapbox/streets-v12',

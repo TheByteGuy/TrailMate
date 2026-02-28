@@ -5,7 +5,7 @@ let timerInterval  = null;
 let totalSeconds   = 0;
 let remainingSeconds = 0;
 let selectedMins   = 0;
-const RING_CIRCUMFERENCE = 439.8; // 2 * PI * 70
+const RING_CIRCUMFERENCE = 552.9; // 2 * PI * 88
 
 function selectDuration(mins) {
   selectedMins = mins;
@@ -41,8 +41,9 @@ function startCheckIn() {
   document.querySelectorAll('.dur-btn').forEach(b => b.disabled = true);
   document.querySelectorAll('.checkin-input').forEach(i => i.disabled = true);
 
-  const contactName = document.getElementById('ci-contact').value.trim();
-  const myName      = document.getElementById('ci-name').value.trim();
+  const contactName  = document.getElementById('ci-contact').value.trim();
+  const contactPhone = document.getElementById('ci-phone').value.trim();
+  const myName       = document.getElementById('ci-name').value.trim();
 
   document.getElementById('timer-label').textContent = 'Walk in progress';
   document.getElementById('checkin-status').textContent =
@@ -64,7 +65,7 @@ function tick() {
   document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2, '0')}`;
 
   const fraction = 1 - remainingSeconds / totalSeconds;
-  setRingOffset(fraction * RING_CIRCUMFERENCE);
+  setRingOffset(fraction);
 
   remainingSeconds--;
 }
@@ -103,7 +104,7 @@ function triggerAlert() {
 
   document.getElementById('timer-display').textContent = '⚠️';
   document.getElementById('timer-label').textContent   = 'Timer expired!';
-  setRingOffset(RING_CIRCUMFERENCE);
+  setRingOffset(1);
 
   const contactName = document.getElementById('ci-contact').value.trim();
   const statusEl    = document.getElementById('checkin-status');
@@ -182,46 +183,6 @@ function renderRoutes(routes) {
   });
 }
 
-// ---- REPORT FORM ----
-async function submitReport(e) {
-  e.preventDefault();
-
-  const type        = document.getElementById('r-type').value;
-  const location    = document.getElementById('r-location').value.trim();
-  const description = document.getElementById('r-description').value.trim();
-  const contact     = document.getElementById('r-contact').value.trim();
-
-  if (!type) {
-    showToast('⚠️ Select a concern type', '', true);
-    return;
-  }
-
-  const btn = document.getElementById('report-btn');
-  btn.disabled    = true;
-  btn.textContent = 'Submitting...';
-
-  try {
-    const res  = await fetch('/api/report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, location, description, contact })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showToast('⚠️ ' + (data.error || 'Could not submit.'), '', true);
-      return;
-    }
-
-    document.getElementById('report-form').reset();
-    showToast('✅ Report Submitted', 'Thank you for keeping TrailMate safe.');
-  } catch {
-    showToast('⚠️ Network error', 'Could not connect to the server.', true);
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Submit Report';
-  }
-}
 
 // ---- INIT ----
 loadRoutes();

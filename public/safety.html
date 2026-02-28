@@ -33,7 +33,7 @@
   <div class="page-hero-inner">
     <div class="page-hero-badge">🛡️ Safety First</div>
     <h1 class="page-hero-title">Your <span class="gold">Safety Hub</span></h1>
-    <p class="page-hero-subtitle">Check-in timers, emergency contacts, pre-vetted campus routes, and a way to report concerns — all in one place.</p>
+    <p class="page-hero-subtitle">Check-in timers, emergency contacts, and pre-vetted campus routes — all in one place.</p>
   </div>
 </div>
 
@@ -53,10 +53,10 @@
 
         <!-- Timer Ring -->
         <div class="timer-ring-wrap">
-          <svg class="timer-ring-svg" width="160" height="160" viewBox="0 0 160 160">
-            <circle class="timer-ring-bg" cx="80" cy="80" r="70"/>
-            <circle class="timer-ring-fill" id="timer-ring" cx="80" cy="80" r="70"
-              stroke-dasharray="439.8" stroke-dashoffset="0"/>
+          <svg class="timer-ring-svg" width="200" height="200" viewBox="0 0 200 200">
+            <circle class="timer-ring-bg" cx="100" cy="100" r="88"/>
+            <circle class="timer-ring-fill" id="timer-ring" cx="100" cy="100" r="88"
+              stroke-dasharray="552.9" stroke-dashoffset="0"/>
           </svg>
           <div class="timer-display-wrap">
             <div class="timer-display" id="timer-display">--:--</div>
@@ -76,6 +76,7 @@
         <div class="checkin-form" id="checkin-form-fields">
           <input type="text" class="checkin-input" id="ci-name" placeholder="Your name (optional)">
           <input type="text" class="checkin-input" id="ci-contact" placeholder="Emergency contact name (optional)">
+          <input type="tel" class="checkin-input" id="ci-phone" placeholder="Emergency contact phone (optional)">
         </div>
 
         <!-- Actions -->
@@ -161,43 +162,6 @@
   </div>
 </section>
 
-<!-- REPORT A CONCERN -->
-<section class="safety-section report-section" id="report">
-  <div class="section-inner" style="position:relative;z-index:1;">
-    <div class="section-label" style="color:var(--gold);">Community Watchdog</div>
-    <h2 class="section-title" style="color:var(--white);">Report a Concern</h2>
-    <p class="section-subtitle" style="color:rgba(255,255,255,0.6);">See something that feels off? Help keep campus safe by letting us know.</p>
-
-    <div class="report-card">
-      <form id="report-form" onsubmit="submitReport(event)">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="report-form-label">Type of Concern</label>
-          <select class="report-form-select" id="r-type">
-            <option value="">Select a type...</option>
-            <option value="suspicious">Suspicious person or activity</option>
-            <option value="unsafe-area">Unsafe area (poor lighting, hazard)</option>
-            <option value="maintenance">Maintenance issue (broken light, blocked path)</option>
-            <option value="incident">Incident or near-miss</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="report-form-label">Location</label>
-          <input type="text" class="report-form-input" id="r-location" placeholder="e.g. Near The Green, behind Gore Hall...">
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="report-form-label">Description <span style="color:rgba(255,255,255,0.4);font-weight:400;">(required)</span></label>
-          <textarea class="report-form-textarea" id="r-description" placeholder="Describe what you saw or experienced..." required></textarea>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="report-form-label">Your Contact <span style="color:rgba(255,255,255,0.4);font-weight:400;">(optional — only if you want follow-up)</span></label>
-          <input type="email" class="report-form-input" id="r-contact" placeholder="yourname@udel.edu">
-        </div>
-        <button type="submit" class="btn-report" id="report-btn">Submit Report</button>
-      </form>
-    </div>
-  </div>
-</section>
 
 <!-- FOOTER -->
 <footer>
@@ -225,7 +189,7 @@
         <ul class="footer-col-links">
           <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
           <li><a href="/safety.html">Safety Guidelines</a></li>
-          <li><a href="/safety.html#report">Report Concern</a></li>
+          <li><a href="/safety.html#routes">Safe Routes</a></li>
           <li><a href="/community.html">Community Standards</a></li>
         </ul>
       </div>

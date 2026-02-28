@@ -2,10 +2,20 @@
 
 let currentFilter = 'all';
 const joinedWalks = new Set();
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.js';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// walks.js or a separate config file
+mapboxgl.accessToken = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
+walkMap = new mapboxgl.Map({
+  container: 'walk-map-container',
+  style: 'mapbox://styles/mapbox/streets-v12',
+  center: [walk.fromLng, walk.fromLat],
+  zoom: 15
+});
+
 // ---- MODAL ----
 function openModal() {
   document.getElementById('modal-overlay').classList.add('open');

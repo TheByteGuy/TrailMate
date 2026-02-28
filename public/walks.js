@@ -36,6 +36,7 @@ function getCurrentLocation() {
 let currentFilter = 'all';
 const joinedWalks = new Set();
 let walkMap = null;
+let geolocateControl = null;
 let activeMapTheme = 'streets';
 let currentWalkData = null;
 let userLocation = null;   // cached once on modal open
@@ -323,6 +324,11 @@ function setupAutocomplete(inputId, onSelect) {
 async function submitWalk(e) {
   e.preventDefault();
 
+  const submitBtn = document.getElementById('submit-btn');
+  if (submitBtn.disabled) return;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Posting...';
+
   const name = document.getElementById('f-name').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const year = document.getElementById('f-year').value;
@@ -373,6 +379,8 @@ async function submitWalk(e) {
 
   } catch (err) {
     alert("Error posting walk: " + err.message);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Post Walk 🚶';
   }
 }
 
@@ -418,6 +426,16 @@ function initMap(walk) {
     antialias: true
   });
 
+  walkMap.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
+  geolocateControl = new mapboxgl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true,
+    showUserHeading: true,
+    showAccuracyCircle: true
+  });
+  walkMap.addControl(geolocateControl, 'bottom-right');
+
   walkMap.on('style.load', () => {
     if (theme.buildings) {
       const layers = walkMap.getStyle().layers;
@@ -455,6 +473,9 @@ function initMap(walk) {
       .addTo(walkMap);
 
     drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
+
+    // Auto-start live GPS tracking
+    geolocateControl.trigger();
   });
 }
 

@@ -75,6 +75,12 @@
 #walk-map-container.map-sat-enhance {
   filter: saturate(1.5) brightness(1.08);
 }
+#walk-map-container:fullscreen,
+#walk-map-container:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
 
 /* ---- MAP THEME PICKER ---- */
 .map-theme-picker {

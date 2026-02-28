@@ -101,12 +101,15 @@
   <div class="modal map-modal">
     <div class="modal-header" style="margin-bottom:16px;">
       <h3 class="modal-title">Walk Map 🗺️</h3>
-      <div class="map-theme-picker">
-        <button class="map-theme-btn active" data-theme="streets" onclick="switchMapTheme('streets')">Streets</button>
-        <button class="map-theme-btn" data-theme="sat-flat" onclick="switchMapTheme('sat-flat')">Satellite</button>
-        <button class="map-theme-btn" data-theme="sat-3d" onclick="switchMapTheme('sat-3d')">3D Satellite</button>
+      <select class="map-theme-select" id="map-theme-select" onchange="switchMapTheme(this.value)">
+        <option value="streets">Streets</option>
+        <option value="sat-flat">Satellite</option>
+        <option value="sat-3d">3D Satellite</option>
+      </select>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="map-fullscreen-btn" id="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Fullscreen">⛶</button>
+        <button class="modal-close" onclick="closeWalkMap()">✕</button>
       </div>
-      <button class="modal-close" onclick="closeWalkMap()">✕</button>
     </div>
     <div id="walk-map-container"></div>
   </div>

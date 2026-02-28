@@ -60,6 +60,10 @@
 .btn-join.full    { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
 
 /* ---- POST WALK MODAL ---- */
+#walk-map-container {
+  width: 100%;
+  height: 400px;   /* or 100%, but must not be 0 */
+}
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(10,20,40,0.7);
   backdrop-filter: blur(8px); z-index: 200;
@@ -123,4 +127,24 @@
   .walks-header { flex-direction: column; }
   .modal { padding: 24px 20px; }
   .form-row { grid-template-columns: 1fr; }
+}
+/* ---- MAP BUTTON ---- */
+.btn-view-map {
+  background: var(--white); 
+  color: var(--blue); 
+  border: 1.5px solid var(--blue);
+  padding: 8.5px 16px; /* 8.5px instead of 10px accounts for the 1.5px border height */
+  border-radius: 100px; 
+  font-family: var(--font-body);
+  font-size: 13px; 
+  font-weight: 700; 
+  cursor: pointer; 
+  transition: all 0.2s;
+  margin-left: 8px; /* Adds space between this and the joined button */
+}
+
+.btn-view-map:hover { 
+  background: var(--off-white, #f8fafc); 
+  transform: translateY(-1px); 
+  box-shadow: 0 4px 12px rgba(0, 83, 159, 0.1); 
 }

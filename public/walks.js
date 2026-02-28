@@ -8,6 +8,8 @@ export const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
 );
 
+mapboxgl.accessToken = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
+
 // ---- LOCATION ----
 function getCurrentLocation() {
   return new Promise((resolve, reject) => {
@@ -104,66 +106,52 @@ function renderWalks(walks) {
 }
 
 function buildCardHTML(walk) {
-  const spotsLeft = walk.maxspots - walk.joinedspots - 1;
-  const fillPct = Math.round(((walk.joinedspots + 1) / walk.maxspots) * 100);
-  const isFull = spotsLeft <= 0;
-  const isJoined = joinedWalks.has(walk.id);
-  const tagsHTML = walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || '';
-  const notesHTML = walk.notes ? `<p class="walk-notes">"${walk.notes}"</p>` : '';
+  // 1. Safe fallbacks for Supabase case-insensitivity
+  const max = walk.maxSpots ?? walk.maxspots ?? 1;
+  const joined = walk.joinedSpots ?? walk.joinedspots ?? 0;
+  const left = max - joined - 1, full = left <= 0, myWalk = joinedWalks.has(walk.id);
+  
+  // 2. Compact date/time math
+  const d = new Date(walk.isoTime || walk.isotime), now = new Date();
+  const diff = Math.round((new Date(d).setHours(0,0,0,0) - new Date(now).setHours(0,0,0,0)) / 864e5);
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const dateStr = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff === -1 ? 'Yesterday' 
+    : (diff > 1 && diff < 7) ? d.toLocaleDateString([], { weekday: 'long' }) 
+    : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
 
-  let btnClass = 'btn-join';
-  let btnText = 'Join Walk →';
-  if (isJoined) { btnClass += ' joined'; btnText = '✓ Joined!'; }
-  else if (isFull) { btnClass += ' full'; btnText = 'Walk Full'; }
-
+  // 3. Return HTML
   return `
     <div class="walk-card" id="walk-${walk.id}">
       <div class="walk-card-top">
         <div class="walk-user">
-          <div class="avatar ${walk.avatarClass}">${walk.initials}</div>
-          <div>
-            <div class="walk-user-name">${walk.name}</div>
-            <div class="walk-user-year">${walk.year} · UD Verified ✓</div>
-          </div>
+          <div class="avatar ${walk.avatarClass || ''}">${walk.initials || '?'}</div>
+          <div><div class="walk-user-name">${walk.name}</div><div class="walk-user-year">${walk.year} · UD Verified ✓</div></div>
         </div>
-        <span class="walk-type-badge ${walk.typeBadge}">${walk.typeLabel}</span>
+        <span class="walk-type-badge ${walk.typeBadge || ''}">${walk.typeLabel || 'Walk'}</span>
       </div>
 
-      <div class="walk-route">
-        <span class="walk-route-from">${walk.from}</span>
-        <span class="walk-route-arrow">→</span>
-        <span class="walk-route-to">${walk.to}</span>
-      </div>
+      <div class="walk-route"><span class="walk-route-from">${walk.from}</span> → <span class="walk-route-to">${walk.to}</span></div>
 
       <div class="walk-meta">
-        <div class="walk-meta-item">
-          <span class="walk-meta-icon">🕐</span>
-          ${walk.time}
-        </div>
-        <div class="walk-meta-item" id="spots-meta-${walk.id}">
-          <span class="walk-meta-icon">👥</span>
-          ${isFull ? 'Full' : spotsLeft + ' spot' + (spotsLeft !== 1 ? 's' : '') + ' left'}
-        </div>
+        <div class="walk-meta-item"><span class="walk-meta-icon">🕐</span> ${dateStr}, at ${time}</div>
+        <div class="walk-meta-item" id="spots-meta-${walk.id}"><span class="walk-meta-icon">👥</span> ${full ? 'Full' : `${left} spot${left !== 1 ? 's' : ''} left`}</div>
       </div>
 
       <div class="walk-spots">
-        <div class="walk-spots-text">
-          <span>Group size</span>
-          <strong id="spots-count-${walk.id}">${walk.joinedspots + 1} / ${walk.maxspots} people</strong>
-        </div>
-        <div class="spots-bar">
-          <div class="spots-fill" id="spots-fill-${walk.id}" style="width:${fillPct}%"></div>
-        </div>
+        <div class="walk-spots-text"><span>Group size</span> <strong id="spots-count-${walk.id}">${joined + 1} / ${max} people</strong></div>
+        <div class="spots-bar"><div class="spots-fill" id="spots-fill-${walk.id}" style="width:${Math.round(((joined + 1) / max) * 100)}%"></div></div>
       </div>
 
-      <div class="walk-tags">${tagsHTML}</div>
-      ${notesHTML}
+      <div class="walk-tags">${walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || ''}</div>
+      ${walk.notes ? `<p class="walk-notes">"${walk.notes}"</p>` : ''}
 
-      <div class="walk-card-footer">
-        <span class="walk-card-time">Posted recently</span>
-        <button class="${btnClass}" id="join-btn-${walk.id}" onclick="joinWalk(${walk.id})" ${(isFull || isJoined) ? 'disabled' : ''}>${btnText}</button>
-        ${isJoined ? `<button class="btn-view-map" onclick="openWalkMap(${walk.id})">View Map 🗺️</button>` : ''}
-      </div>
+     <div class="walk-card-footer">
+      <span class="walk-card-time">Posted recently</span>
+      <button class="btn-join ${myWalk ? 'joined' : full ? 'full' : ''}" id="join-btn-${walk.id}" onclick="joinWalk('${walk.id}')" ${full || myWalk ? 'disabled' : ''}>
+        ${myWalk ? '✓ Joined!' : full ? 'Walk Full' : 'Join Walk →'}
+      </button>
+      ${myWalk ? `<button class="btn-view-map" onclick="openWalkMap('${walk.id}')">View Map 🗺️</button>` : ''}
+    </div>
     </div>`;
 }
 
@@ -174,7 +162,10 @@ async function joinWalk(id) {
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
 
-  const email = document.getElementById('f-email')?.value || prompt('Enter your UD email');
+  const email =
+    document.getElementById('f-email')?.value ||
+    prompt('Enter your UD email');
+
   if (!email?.toLowerCase().endsWith('@udel.edu')) {
     alert('UD email required');
     return;
@@ -184,19 +175,38 @@ async function joinWalk(id) {
   btn.textContent = 'Joining...';
 
   try {
-    // Increment joinedspots atomically using Supabase `increment`
-    const { data: walk, error } = await supabase
+    // 1. Fetch the walk safely without guessing the column capitalization
+    const { data: currentWalk, error: fetchError } = await supabase
       .from('walks')
-      .update({ joinedspots: supabase.rpc('increment', { column: 'joinedspots', value: 1 }) })
+      .select('*') 
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // 2. Safely read the lowercase value from the database
+    const currentSpots = currentWalk.joinedspots || 0;
+
+    // 3. Update the database using ONLY the lowercase column name
+    const { data: walk, error: updateError } = await supabase
+      .from('walks')
+      .update({ joinedspots: currentSpots + 1 }) 
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
     joinedWalks.add(id);
-    renderWalks([walk]);
+
     alert(`🎉 You joined ${walk.name}'s walk!`);
+
+    // Show route immediately
+    openWalkMap(id);
+
+    // Optional: reload walks grid
+    await loadWalks(currentFilter);
+
   } catch (err) {
     alert('Could not join walk: ' + err.message);
     btn.disabled = false;
@@ -219,8 +229,21 @@ async function submitWalk(e) {
   const notes = document.getElementById('f-notes').value.trim();
 
   try {
-    // 👇 GET USER LOCATION
+    // 🔥 Get current location (START)
     const location = await getCurrentLocation();
+
+    // 🔥 Geocode destination (END)
+    const geoRes = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(to)}.json?access_token=${mapboxgl.accessToken}`
+    );
+
+    const geoData = await geoRes.json();
+
+    if (!geoData.features.length) {
+      throw new Error("Destination not found");
+    }
+
+    const [destLng, destLat] = geoData.features[0].center;
 
     const { error } = await supabase.from('walks').insert([{
       name,
@@ -235,13 +258,16 @@ async function submitWalk(e) {
       joinedspots: 0,
       fromlat: location.lat,
       fromlng: location.lng,
-      tolat: location.lat,   // temporary until you geocode destination
-      tolng: location.lng
+      tolat: destLat,
+      tolng: destLng
     }]);
 
     if (error) throw error;
 
-    alert("Walk posted!");
+    alert("✅ Walk posted!");
+    closeModal();
+    await loadWalks(currentFilter);
+
   } catch (err) {
     alert("Error posting walk: " + err.message);
   }
@@ -250,7 +276,11 @@ async function submitWalk(e) {
 // ---- MAPBOX ----
 async function openWalkMap(walkId) {
   try {
-    const { data: walk, error } = await supabase.from('walks').select('*').eq('id', walkId).single();
+    const { data: walk, error } = await supabase
+      .from('walks')
+      .select('*')
+      .eq('id', walkId)
+      .single();
     if (error) throw error;
 
     document.getElementById('map-modal-overlay').classList.add('open');
@@ -260,30 +290,102 @@ async function openWalkMap(walkId) {
 
     walkMap = new mapboxgl.Map({
       container: 'walk-map-container',
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [walk.fromLng, walk.fromLat],
-      zoom: 15
+      style: 'mapbox://styles/mapbox/streets-v12', // realistic style
+      center: [walk.fromlng, walk.fromlat],
+      zoom: 16,
+      pitch: 45,
+      bearing: -20,
+      antialias: true
     });
 
-    walkMap.addControl(new mapboxgl.NavigationControl());
+    walkMap.on('style.load', () => {
+      // 3D buildings
+      const layers = walkMap.getStyle().layers;
+      const labelLayerId = layers.find(
+        layer => layer.type === 'symbol' && layer.layout['text-field']
+      )?.id;
 
-    new mapboxgl.Marker({ color: 'blue' })
-      .setLngLat([walk.fromLng, walk.fromLat])
-      .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
-      .addTo(walkMap);
+      walkMap.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#d6d6d6',
+          'fill-extrusion-height': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            15, 0,
+            16, ['get', 'height']
+          ],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.7
+        }
+      }, labelLayerId);
 
-    new mapboxgl.Marker({ color: 'red' })
-      .setLngLat([walk.toLng, walk.toLat])
-      .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
-      .addTo(walkMap);
+      // Markers
+      new mapboxgl.Marker({ color: '#2e86de' })
+        .setLngLat([walk.fromlng, walk.fromlat])
+        .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
+        .addTo(walkMap);
 
-    drawWalkRoute(walk.fromLng, walk.fromLat, walk.toLng, walk.toLat);
+      new mapboxgl.Marker({ color: '#e74c3c' })
+        .setLngLat([walk.tolng, walk.tolat])
+        .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
+        .addTo(walkMap);
+
+      // Draw route
+      drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
+    });
+
   } catch (err) {
     alert('Could not load map: ' + err.message);
   }
 }
 
+async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+    );
+    const data = await res.json();
+    if (!data.routes?.length) return;
 
+    const route = data.routes[0].geometry; // GeoJSON LineString
+
+    // Remove old route if exists
+    if (walkMap.getSource('route')) {
+      if (walkMap.getLayer('route-line')) walkMap.removeLayer('route-line');
+      walkMap.removeSource('route');
+    }
+
+    // Add new route
+    walkMap.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
+
+    walkMap.addLayer({
+      id: 'route-line',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#1abc9c', 'line-width': 6 }
+    });
+
+    // Fit map to route bounds
+    const bounds = route.coordinates.reduce(
+      (b, coord) => b.extend(coord),
+      new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0])
+    );
+    walkMap.fitBounds(bounds, { padding: 80, maxZoom: 18, pitch: 45, bearing: -20 });
+
+  } catch (err) {
+    console.error('Failed to draw route:', err);
+  }
+}
+
+// Close map
 function closeWalkMap() {
   document.getElementById('map-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';

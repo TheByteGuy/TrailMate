@@ -5,7 +5,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 export const supabase = createClient(
   'https://zsujhugkllbnqidswkgt.supabase.co',
-  'your-anon-key'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
 );
 
 // ---- STATE ----
@@ -47,17 +47,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 async function loadWalks(filter = 'all') {
   const grid = document.getElementById('walks-grid');
   grid.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading walks...</p></div>`;
+
   try {
-    const url = filter === 'all' ? '/api/walks' : `/api/walks?type=${filter}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed');
-    const walks = await res.json();
-    renderWalks(walks);
-  } catch {
+    let query = supabase.from('walks').select('*').order('isotime', { ascending: true });
+    if (filter !== 'all') query = query.eq('type', filter);
+
+    const { data: walks, error } = await query;
+
+    if (error) throw error;
+    renderWalks(walks || []);
+  } catch (err) {
     grid.innerHTML = `
       <div class="loading-state">
         <div style="font-size:40px;">⚠️</div>
-        <p style="color:var(--gray-700);">Could not load walks. Is the server running?</p>
+        <p style="color:var(--gray-700);">Could not load walks. ${err.message}</p>
       </div>`;
   }
 }
@@ -149,31 +152,31 @@ async function joinWalk(id) {
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
 
-  btn.disabled = true;
-  btn.textContent = 'Joining...';
-
   const email = document.getElementById('f-email')?.value || prompt('Enter your UD email');
   if (!email?.toLowerCase().endsWith('@udel.edu')) {
     alert('UD email required');
-    btn.disabled = false;
-    btn.textContent = 'Join Walk →';
     return;
   }
 
+  btn.disabled = true;
+  btn.textContent = 'Joining...';
+
   try {
-    const res = await fetch('/api/join-walk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walkId: id, userEmail: email })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Could not join walk');
+    // Increment joinedSpots atomically using Supabase `increment`
+    const { data: walk, error } = await supabase
+      .from('walks')
+      .update({ joinedSpots: supabase.rpc('increment', { column: 'joinedSpots', value: 1 }) })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
 
     joinedWalks.add(id);
-    renderWalks([data.walk]);
-    showToast(`🎉 You joined ${data.walk.name}'s walk!`, `${data.walk.from} → ${data.walk.to} · ${data.walk.time}`);
+    renderWalks([walk]);
+    alert(`🎉 You joined ${walk.name}'s walk!`);
   } catch (err) {
-    alert(err.message);
+    alert('Could not join walk: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Join Walk →';
   }
@@ -182,18 +185,19 @@ async function joinWalk(id) {
 // ---- SUBMIT WALK ----
 async function submitWalk(e) {
   e.preventDefault();
+
   const name = document.getElementById('f-name').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const year = document.getElementById('f-year').value;
   const from = document.getElementById('f-from').value.trim();
   const to = document.getElementById('f-to').value.trim();
   const isoTime = document.getElementById('f-time').value;
-  const maxSpots = document.getElementById('f-size').value;
+  const maxSpots = parseInt(document.getElementById('f-size').value, 10);
   const type = document.getElementById('f-type').value;
   const notes = document.getElementById('f-notes').value.trim();
 
   if (!email.toLowerCase().endsWith('@udel.edu')) {
-    showToast('⚠️ UD Email Required', 'Please use your @udel.edu email address.', true);
+    alert('UD email required');
     return;
   }
 
@@ -202,29 +206,18 @@ async function submitWalk(e) {
   submitBtn.textContent = 'Posting...';
 
   try {
-    const res = await fetch('/api/walks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, year, from, to, isoTime, maxSpots, type, notes })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast('⚠️ ' + (data.error || 'Could not post walk.'), '', true);
-      return;
-    }
+    const { data, error } = await supabase.from('walks').insert([{
+      name, email, year, from, to, isoTime, maxSpots, type, notes, joinedSpots: 0
+    }]);
+
+    if (error) throw error;
 
     document.getElementById('walk-form').reset();
     closeModal();
-
-    currentFilter = 'all';
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-filter="all"]').classList.add('active');
-    await loadWalks('all');
-
-    showToast('✅ Walk Posted!', `Your walk from ${from} → ${to} is now live.`);
-    setTimeout(() => document.getElementById('walks-section').scrollIntoView({ behavior: 'smooth' }), 300);
-  } catch {
-    showToast('⚠️ Network error', 'Could not connect to the server.', true);
+    await loadWalks(currentFilter);
+    alert('✅ Walk Posted!');
+  } catch (err) {
+    alert('Error posting walk: ' + err.message);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Post Walk 🚶';
@@ -234,8 +227,8 @@ async function submitWalk(e) {
 // ---- MAPBOX ----
 async function openWalkMap(walkId) {
   try {
-    const res = await fetch(`/api/walks/${walkId}`);
-    const walk = await res.json();
+    const { data: walk, error } = await supabase.from('walks').select('*').eq('id', walkId).single();
+    if (error) throw error;
 
     document.getElementById('map-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -266,6 +259,7 @@ async function openWalkMap(walkId) {
     alert('Could not load map: ' + err.message);
   }
 }
+
 
 function closeWalkMap() {
   document.getElementById('map-modal-overlay').classList.remove('open');

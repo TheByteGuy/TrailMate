@@ -173,6 +173,30 @@ function buildCardHTML(walk) {
     </div>`;
 }
 
+// ---- LOGIN PROMPT ----
+function showLoginPrompt() {
+  const container = document.getElementById('toast-container');
+  if (!container) { window.location.href = 'auth.html'; return; }
+
+  container.querySelector('.login-prompt-toast')?.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-warn login-prompt-toast';
+  toast.style.cssText = 'min-width:260px;';
+  toast.innerHTML = `
+    <div>
+      <div style="font-weight:700;margin-bottom:4px;">Sign in to join walks</div>
+      <div style="font-size:12px;opacity:0.8;margin-bottom:10px;">You need a TrailMate account to join a walk.</div>
+      <a href="auth.html" style="display:inline-block;background:#fff;color:#00539F;font-weight:700;font-size:13px;padding:6px 16px;border-radius:6px;text-decoration:none;">Log In &rarr;</a>
+    </div>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.4s ease both';
+    setTimeout(() => toast.remove(), 400);
+  }, 6000);
+}
+
 // ---- JOIN WALK ----
 async function joinWalk(id) {
   if (joinedWalks.has(id)) return;
@@ -180,12 +204,10 @@ async function joinWalk(id) {
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
 
-  const email =
-    document.getElementById('f-email')?.value ||
-    prompt('Enter your UD email');
-
-  if (!email?.toLowerCase().endsWith('@udel.edu')) {
-    alert('UD email required');
+  // Require auth
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    showLoginPrompt();
     return;
   }
 
@@ -193,22 +215,19 @@ async function joinWalk(id) {
   btn.textContent = 'Joining...';
 
   try {
-    // 1. Fetch the walk safely without guessing the column capitalization
     const { data: currentWalk, error: fetchError } = await supabase
       .from('walks')
-      .select('*') 
+      .select('*')
       .eq('id', id)
       .single();
 
     if (fetchError) throw fetchError;
 
-    // 2. Safely read the lowercase value from the database
     const currentSpots = currentWalk.joinedspots || 0;
 
-    // 3. Update the database using ONLY the lowercase column name
     const { data: walk, error: updateError } = await supabase
       .from('walks')
-      .update({ joinedspots: currentSpots + 1 }) 
+      .update({ joinedspots: currentSpots + 1 })
       .eq('id', id)
       .select()
       .single();
@@ -217,16 +236,13 @@ async function joinWalk(id) {
 
     joinedWalks.add(id);
 
-    alert(`🎉 You joined ${walk.name}'s walk!`);
+    window.showToast?.(`Joined ${walk.name}'s walk!`, 'The map is loading...');
 
-    // Show route immediately
     openWalkMap(id);
-
-    // Optional: reload walks grid
     await loadWalks(currentFilter);
 
   } catch (err) {
-    alert('Could not join walk: ' + err.message);
+    window.showToast?.('Could not join walk', err.message, true);
     btn.disabled = false;
     btn.textContent = 'Join Walk →';
   }

@@ -7,23 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="safety.css">
 </head>
 <body class="safety-page">
 
 <!-- NAV -->
 <nav id="navbar">
-  <a href="/" class="nav-logo">
+  <a href="/public" class="nav-logo">
     <div class="nav-logo-icon">🥾</div>
     <span class="nav-logo-text">TrailMate</span>
   </a>
   <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/walks.html">Find Walks</a></li>
-    <li><a href="/safety.html" class="nav-active">Safety</a></li>
-    <li><a href="/community.html">Community</a></li>
-    <li><a href="/walks.html" class="nav-cta">+ Post a Walk</a></li>
+    <li><a href="/public">Home</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html" class="nav-active">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
   <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
 </nav>
@@ -168,7 +168,7 @@
   <div class="footer-inner">
     <div class="footer-top">
       <div>
-        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+        <a href="/public" class="nav-logo" style="margin-bottom:16px;display:flex;">
           <div class="nav-logo-icon">🥾</div>
           <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
         </a>
@@ -178,25 +178,25 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-col-links">
-          <li><a href="/walks.html">Find a Walk</a></li>
-          <li><a href="/walks.html">Post a Walk</a></li>
-          <li><a href="/#how-it-works">How It Works</a></li>
-          <li><a href="/safety.html">Safety Features</a></li>
+          <li><a href="/Walks/walks.html">Find a Walk</a></li>
+          <li><a href="/Walks/walks.html">Post a Walk</a></li>
+          <li><a href="/public#how-it-works">How It Works</a></li>
+          <li><a href="/Safety/safety.html">Safety Features</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">Safety</div>
         <ul class="footer-col-links">
           <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
-          <li><a href="/safety.html">Safety Guidelines</a></li>
-          <li><a href="/safety.html#routes">Safe Routes</a></li>
-          <li><a href="/community.html">Community Standards</a></li>
+          <li><a href="/Safety/safety.html">Safety Guidelines</a></li>
+          <li><a href="/Safety/safety.html#routes">Safe Routes</a></li>
+          <li><a href="/Community/community.html">Community Standards</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">About</div>
         <ul class="footer-col-links">
-          <li><a href="/community.html">Our Story</a></li>
+          <li><a href="/Community/community.html">Our Story</a></li>
           <li><a href="#">Contact Us</a></li>
           <li><a href="#">Privacy Policy</a></li>
           <li><a href="#">Terms of Use</a></li>
@@ -211,7 +211,7 @@
 </footer>
 
 <div class="toast-container" id="toast-container"></div>
-<script src="app.js"></script>
+<script src="../app.js"></script>
 <script src="safety.js"></script>
 </body>
 </html>

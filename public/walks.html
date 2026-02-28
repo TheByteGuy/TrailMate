@@ -52,6 +52,7 @@
     <li><a href="/walks.html" class="nav-active">Find Walks</a></li>
     <li><a href="/safety.html">Safety</a></li>
     <li><a href="/community.html">Community</a></li>
+    <li><a href="/auth.html" id="nav-profile-link">Log In</a></li>
     <li><a href="#" class="nav-cta" onclick="openModal(); return false;">+ Post a Walk</a></li>
   </ul>
   <button class="nav-mobile-btn" onclick="openModal()">+ Post</button>
@@ -97,12 +98,17 @@
 
 <!-- WALK MAP MODAL -->
 <div class="modal-overlay" id="map-modal-overlay">
-  <div class="modal" style="width:90%; max-width:800px; height:500px;">
-    <div class="modal-header">
+  <div class="modal map-modal">
+    <div class="modal-header" style="margin-bottom:16px;">
       <h3 class="modal-title">Walk Map 🗺️</h3>
+      <div class="map-theme-picker">
+        <button class="map-theme-btn active" data-theme="streets" onclick="switchMapTheme('streets')">Streets</button>
+        <button class="map-theme-btn" data-theme="sat-flat" onclick="switchMapTheme('sat-flat')">Satellite</button>
+        <button class="map-theme-btn" data-theme="sat-3d" onclick="switchMapTheme('sat-3d')">3D Satellite</button>
+      </div>
       <button class="modal-close" onclick="closeWalkMap()">✕</button>
     </div>
-    <div id="walk-map-container" style="width:100%; height:100%;"></div>
+    <div id="walk-map-container"></div>
   </div>
 </div>
 
@@ -228,6 +234,6 @@
 </div>
 
 <div class="toast-container" id="toast-container"></div>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

@@ -36,6 +36,17 @@ function getCurrentLocation() {
 let currentFilter = 'all';
 const joinedWalks = new Set();
 let walkMap = null;
+let activeMapTheme = 'streets';
+let currentWalkData = null;
+let userLocation = null;   // cached once on modal open
+let fromCoords = null;     // set when user picks a suggestion for From
+let toCoords = null;       // set when user picks a suggestion for To
+
+const MAP_STYLES = {
+  streets:    { url: 'mapbox://styles/mapbox/streets-v12',          pitch: 45, bearing: -20, buildings: true,  enhance: false },
+  'sat-flat': { url: 'mapbox://styles/mapbox/satellite-streets-v12', pitch: 0,  bearing: 0,   buildings: false, enhance: true  },
+  'sat-3d':   { url: 'mapbox://styles/mapbox/satellite-streets-v12', pitch: 45, bearing: -20, buildings: true,  enhance: true  }
+};
 
 // ---- MODAL ----
 function openModal() {
@@ -46,11 +57,18 @@ function openModal() {
     .toISOString()
     .slice(0, 16);
   document.getElementById('f-time').value = local;
+
+  // Pre-fetch location so autocomplete has proximity bias ready
+  if (!userLocation) {
+    getCurrentLocation().then(loc => { userLocation = loc; }).catch(() => {});
+  }
 }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  fromCoords = null;
+  toCoords = null;
 }
 
 document.getElementById('modal-overlay').addEventListener('click', e => {
@@ -214,6 +232,77 @@ async function joinWalk(id) {
   }
 }
 
+// ---- LOCATION AUTOCOMPLETE ----
+function setupAutocomplete(inputId, onSelect) {
+  const input = document.getElementById(inputId);
+  let debounce;
+
+  function removeDropdown() {
+    input.parentElement.querySelector('.location-suggestions')?.remove();
+  }
+
+  input.addEventListener('input', () => {
+    onSelect(null); // clear stored coords whenever user edits manually
+    clearTimeout(debounce);
+    const q = input.value.trim();
+    if (q.length < 2) { removeDropdown(); return; }
+
+    debounce = setTimeout(async () => {
+      try {
+        // ~30 miles in degrees at ~39°N (Delaware area)
+        const D_LAT = 0.435;
+        const D_LNG = 0.566;
+
+        let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
+          `?access_token=${mapboxgl.accessToken}&limit=5&types=address,poi,place,neighborhood`;
+
+        if (userLocation) {
+          const { lat, lng } = userLocation;
+          url += `&proximity=${lng},${lat}`;
+          url += `&bbox=${lng - D_LNG},${lat - D_LAT},${lng + D_LNG},${lat + D_LAT}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+        renderDropdown(data.features || []);
+      } catch {
+        removeDropdown();
+      }
+    }, 300);
+  });
+
+  function renderDropdown(features) {
+    removeDropdown();
+    if (!features.length) return;
+
+    const ul = document.createElement('ul');
+    ul.className = 'location-suggestions';
+
+    features.forEach(f => {
+      const li = document.createElement('li');
+      li.className = 'location-suggestion-item';
+      const main = f.text || f.place_name.split(',')[0];
+      const sub  = f.place_name.replace(f.text + ', ', '');
+      li.innerHTML =
+        `<span class="sugg-main">${main}</span>` +
+        `<span class="sugg-sub">${sub}</span>`;
+
+      li.addEventListener('mousedown', e => {
+        e.preventDefault(); // keep input focused
+        input.value = f.place_name;
+        onSelect({ lat: f.center[1], lng: f.center[0] });
+        removeDropdown();
+      });
+
+      ul.appendChild(li);
+    });
+
+    input.parentElement.appendChild(ul);
+  }
+
+  input.addEventListener('blur', () => setTimeout(removeDropdown, 200));
+}
+
 // ---- SUBMIT WALK ----
 async function submitWalk(e) {
   e.preventDefault();
@@ -229,37 +318,35 @@ async function submitWalk(e) {
   const notes = document.getElementById('f-notes').value.trim();
 
   try {
-    // 🔥 Get current location (START)
-    const location = await getCurrentLocation();
-
-    // 🔥 Geocode destination (END)
-    const geoRes = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(to)}.json?access_token=${mapboxgl.accessToken}`
-    );
-
-    const geoData = await geoRes.json();
-
-    if (!geoData.features.length) {
-      throw new Error("Destination not found");
+    // From: use selected autocomplete coords, otherwise fall back to GPS
+    let fromlat, fromlng;
+    if (fromCoords) {
+      fromlat = fromCoords.lat;
+      fromlng = fromCoords.lng;
+    } else {
+      const loc = await getCurrentLocation();
+      fromlat = loc.lat;
+      fromlng = loc.lng;
     }
 
-    const [destLng, destLat] = geoData.features[0].center;
+    // To: use selected autocomplete coords, otherwise geocode the text
+    let tolat, tolng;
+    if (toCoords) {
+      tolat = toCoords.lat;
+      tolng = toCoords.lng;
+    } else {
+      const geoRes = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(to)}.json?access_token=${mapboxgl.accessToken}`
+      );
+      const geoData = await geoRes.json();
+      if (!geoData.features.length) throw new Error("Destination not found");
+      [tolng, tolat] = geoData.features[0].center;
+    }
 
     const { error } = await supabase.from('walks').insert([{
-      name,
-      email,
-      year,
-      from,
-      to,
-      isotime,
-      maxspots,
-      type,
-      notes,
+      name, email, year, from, to, isotime, maxspots, type, notes,
       joinedspots: 0,
-      fromlat: location.lat,
-      fromlng: location.lng,
-      tolat: destLat,
-      tolng: destLng
+      fromlat, fromlng, tolat, tolng
     }]);
 
     if (error) throw error;
@@ -283,23 +370,40 @@ async function openWalkMap(walkId) {
       .single();
     if (error) throw error;
 
+    currentWalkData = walk;
     document.getElementById('map-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    if (walkMap) walkMap.remove();
-
-    walkMap = new mapboxgl.Map({
-      container: 'walk-map-container',
-      style: 'mapbox://styles/mapbox/streets-v12', // realistic style
-      center: [walk.fromlng, walk.fromlat],
-      zoom: 16,
-      pitch: 45,
-      bearing: -20,
-      antialias: true
+    document.querySelectorAll('.map-theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === activeMapTheme);
     });
 
-    walkMap.on('style.load', () => {
-      // 3D buildings
+    if (walkMap) { walkMap.remove(); walkMap = null; }
+    initMap(walk);
+
+  } catch (err) {
+    alert('Could not load map: ' + err.message);
+  }
+}
+
+function initMap(walk) {
+  const theme = MAP_STYLES[activeMapTheme];
+
+  document.getElementById('walk-map-container')
+    .classList.toggle('map-sat-enhance', theme.enhance);
+
+  walkMap = new mapboxgl.Map({
+    container: 'walk-map-container',
+    style: theme.url,
+    center: [walk.fromlng, walk.fromlat],
+    zoom: 16,
+    pitch: theme.pitch,
+    bearing: theme.bearing,
+    antialias: true
+  });
+
+  walkMap.on('style.load', () => {
+    if (theme.buildings) {
       const layers = walkMap.getStyle().layers;
       const labelLayerId = layers.find(
         layer => layer.type === 'symbol' && layer.layout['text-field']
@@ -315,35 +419,39 @@ async function openWalkMap(walkId) {
         paint: {
           'fill-extrusion-color': '#d6d6d6',
           'fill-extrusion-height': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            15, 0,
-            16, ['get', 'height']
+            'interpolate', ['linear'], ['zoom'],
+            15, 0, 16, ['get', 'height']
           ],
           'fill-extrusion-base': ['get', 'min_height'],
           'fill-extrusion-opacity': 0.7
         }
       }, labelLayerId);
+    }
 
-      // Markers
-      new mapboxgl.Marker({ color: '#2e86de' })
-        .setLngLat([walk.fromlng, walk.fromlat])
-        .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
-        .addTo(walkMap);
+    new mapboxgl.Marker({ color: '#2e86de' })
+      .setLngLat([walk.fromlng, walk.fromlat])
+      .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
+      .addTo(walkMap);
 
-      new mapboxgl.Marker({ color: '#e74c3c' })
-        .setLngLat([walk.tolng, walk.tolat])
-        .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
-        .addTo(walkMap);
+    new mapboxgl.Marker({ color: '#e74c3c' })
+      .setLngLat([walk.tolng, walk.tolat])
+      .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
+      .addTo(walkMap);
 
-      // Draw route
-      drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
-    });
+    drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
+  });
+}
 
-  } catch (err) {
-    alert('Could not load map: ' + err.message);
-  }
+function switchMapTheme(theme) {
+  if (!currentWalkData) return;
+  activeMapTheme = theme;
+
+  document.querySelectorAll('.map-theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
+
+  if (walkMap) { walkMap.remove(); walkMap = null; }
+  initMap(currentWalkData);
 }
 
 async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
@@ -395,9 +503,13 @@ function closeWalkMap() {
 // ---- INIT ----
 loadWalks();
 
+setupAutocomplete('f-from', coords => { fromCoords = coords; });
+setupAutocomplete('f-to',   coords => { toCoords   = coords; });
+
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.joinWalk = joinWalk;
 window.submitWalk = submitWalk;
-window.openWalkMap = openWalkMap;   // if you're using it
-window.closeWalkMap = closeWalkMap; // if you're using it
+window.openWalkMap = openWalkMap;
+window.closeWalkMap = closeWalkMap;
+window.switchMapTheme = switchMapTheme;

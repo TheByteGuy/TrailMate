@@ -1,14 +1,48 @@
 /* walks.js — walks listing, filtering, modal, and join logic for walks.html */
 
+// ---- CONFIG ----
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+export const supabase = createClient(
+  'https://zsujhugkllbnqidswkgt.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
+);
+
+// ---- LOCATION ----
+function getCurrentLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+}
+
+// ---- STATE ----
 let currentFilter = 'all';
 const joinedWalks = new Set();
+let walkMap = null;
 
 // ---- MODAL ----
 function openModal() {
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   const dt = new Date(Date.now() + 30 * 60 * 1000);
-  const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
   document.getElementById('f-time').value = local;
 }
 
@@ -17,8 +51,8 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('modal-overlay').addEventListener('click', function (e) {
-  if (e.target === this) closeModal();
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
 });
 
 // ---- FILTERS ----
@@ -35,24 +69,28 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 async function loadWalks(filter = 'all') {
   const grid = document.getElementById('walks-grid');
   grid.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading walks...</p></div>`;
+
   try {
-    const url = filter === 'all' ? '/api/walks' : `/api/walks?type=${filter}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed');
-    const walks = await res.json();
-    renderWalks(walks);
-  } catch {
+    let query = supabase.from('walks').select('*').order('isotime', { ascending: true });
+    if (filter !== 'all') query = query.eq('type', filter);
+
+    const { data: walks, error } = await query;
+
+    if (error) throw error;
+    renderWalks(walks || []);
+  } catch (err) {
     grid.innerHTML = `
       <div class="loading-state">
         <div style="font-size:40px;">⚠️</div>
-        <p style="color:var(--gray-700);">Could not load walks. Is the server running?</p>
+        <p style="color:var(--gray-700);">Could not load walks. ${err.message}</p>
       </div>`;
   }
 }
 
+// ---- RENDER WALKS ----
 function renderWalks(walks) {
   const grid = document.getElementById('walks-grid');
-  if (walks.length === 0) {
+  if (!walks || walks.length === 0) {
     grid.innerHTML = `
       <div class="loading-state" style="grid-column:1/-1;">
         <div style="font-size:48px;">🚶</div>
@@ -62,21 +100,21 @@ function renderWalks(walks) {
       </div>`;
     return;
   }
-  grid.innerHTML = walks.map(walk => buildCardHTML(walk)).join('');
+  grid.innerHTML = walks.map(buildCardHTML).join('');
 }
 
 function buildCardHTML(walk) {
-  const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-  const fillPct   = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
-  const isFull    = spotsLeft <= 0;
-  const isJoined  = joinedWalks.has(walk.id);
-  const tagsHTML  = walk.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  const spotsLeft = walk.maxspots - walk.joinedspots - 1;
+  const fillPct = Math.round(((walk.joinedspots + 1) / walk.maxspots) * 100);
+  const isFull = spotsLeft <= 0;
+  const isJoined = joinedWalks.has(walk.id);
+  const tagsHTML = walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || '';
   const notesHTML = walk.notes ? `<p class="walk-notes">"${walk.notes}"</p>` : '';
 
   let btnClass = 'btn-join';
-  let btnText  = 'Join Walk →';
-  if (isJoined)    { btnClass += ' joined'; btnText = '✓ Joined!'; }
-  else if (isFull) { btnClass += ' full';   btnText = 'Walk Full'; }
+  let btnText = 'Join Walk →';
+  if (isJoined) { btnClass += ' joined'; btnText = '✓ Joined!'; }
+  else if (isFull) { btnClass += ' full'; btnText = 'Walk Full'; }
 
   return `
     <div class="walk-card" id="walk-${walk.id}">
@@ -111,7 +149,7 @@ function buildCardHTML(walk) {
       <div class="walk-spots">
         <div class="walk-spots-text">
           <span>Group size</span>
-          <strong id="spots-count-${walk.id}">${walk.joinedSpots + 1} / ${walk.maxSpots} people</strong>
+          <strong id="spots-count-${walk.id}">${walk.joinedspots + 1} / ${walk.maxspots} people</strong>
         </div>
         <div class="spots-bar">
           <div class="spots-fill" id="spots-fill-${walk.id}" style="width:${fillPct}%"></div>
@@ -123,12 +161,8 @@ function buildCardHTML(walk) {
 
       <div class="walk-card-footer">
         <span class="walk-card-time">Posted recently</span>
-        <button
-          class="${btnClass}"
-          id="join-btn-${walk.id}"
-          onclick="joinWalk(${walk.id})"
-          ${(isFull || isJoined) ? 'disabled' : ''}
-        >${btnText}</button>
+        <button class="${btnClass}" id="join-btn-${walk.id}" onclick="joinWalk(${walk.id})" ${(isFull || isJoined) ? 'disabled' : ''}>${btnText}</button>
+        ${isJoined ? `<button class="btn-view-map" onclick="openWalkMap(${walk.id})">View Map 🗺️</button>` : ''}
       </div>
     </div>`;
 }
@@ -136,43 +170,35 @@ function buildCardHTML(walk) {
 // ---- JOIN WALK ----
 async function joinWalk(id) {
   if (joinedWalks.has(id)) return;
+
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
+
+  const email = document.getElementById('f-email')?.value || prompt('Enter your UD email');
+  if (!email?.toLowerCase().endsWith('@udel.edu')) {
+    alert('UD email required');
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Joining...';
 
   try {
-    const res  = await fetch(`/api/walks/${id}/join`, { method: 'POST' });
-    const data = await res.json();
+    // Increment joinedspots atomically using Supabase `increment`
+    const { data: walk, error } = await supabase
+      .from('walks')
+      .update({ joinedspots: supabase.rpc('increment', { column: 'joinedspots', value: 1 }) })
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (!res.ok) {
-      showToast('⚠️ ' + (data.error || 'Could not join walk.'), '', true);
-      btn.disabled = false;
-      btn.textContent = 'Join Walk →';
-      return;
-    }
+    if (error) throw error;
 
     joinedWalks.add(id);
-    const walk     = data.walk;
-    const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-    const fillPct   = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
-
-    btn.textContent = '✓ Joined!';
-    btn.classList.add('joined');
-
-    const meta = document.getElementById(`spots-meta-${id}`);
-    if (meta) meta.innerHTML = `<span class="walk-meta-icon">👥</span> ${spotsLeft > 0 ? spotsLeft + ' spot' + (spotsLeft !== 1 ? 's' : '') + ' left' : 'Full'}`;
-
-    const fill = document.getElementById(`spots-fill-${id}`);
-    if (fill) fill.style.width = fillPct + '%';
-
-    const count = document.getElementById(`spots-count-${id}`);
-    if (count) count.textContent = `${walk.joinedSpots + 1} / ${walk.maxSpots} people`;
-
-    showToast(`🎉 You joined ${walk.name}'s walk!`, `${walk.from} → ${walk.to} · ${walk.time}`);
-  } catch {
-    showToast('⚠️ Network error', 'Could not connect to the server.', true);
+    renderWalks([walk]);
+    alert(`🎉 You joined ${walk.name}'s walk!`);
+  } catch (err) {
+    alert('Could not join walk: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Join Walk →';
   }
@@ -182,55 +208,94 @@ async function joinWalk(id) {
 async function submitWalk(e) {
   e.preventDefault();
 
-  const name     = document.getElementById('f-name').value.trim();
-  const email    = document.getElementById('f-email').value.trim();
-  const year     = document.getElementById('f-year').value;
-  const from     = document.getElementById('f-from').value.trim();
-  const to       = document.getElementById('f-to').value.trim();
-  const isoTime  = document.getElementById('f-time').value;
-  const maxSpots = document.getElementById('f-size').value;
-  const type     = document.getElementById('f-type').value;
-  const notes    = document.getElementById('f-notes').value.trim();
-
-  if (!email.toLowerCase().endsWith('@udel.edu')) {
-    showToast('⚠️ UD Email Required', 'Please use your @udel.edu email address.', true);
-    return;
-  }
-
-  const submitBtn = document.getElementById('submit-btn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Posting...';
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const year = document.getElementById('f-year').value;
+  const from = document.getElementById('f-from').value.trim();
+  const to = document.getElementById('f-to').value.trim();
+  const isotime = document.getElementById('f-time').value;
+  const maxspots = parseInt(document.getElementById('f-size').value, 10);
+  const type = document.getElementById('f-type').value;
+  const notes = document.getElementById('f-notes').value.trim();
 
   try {
-    const res  = await fetch('/api/walks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, year, from, to, isoTime, maxSpots, type, notes })
-    });
-    const data = await res.json();
+    // 👇 GET USER LOCATION
+    const location = await getCurrentLocation();
 
-    if (!res.ok) {
-      showToast('⚠️ ' + (data.error || 'Could not post walk.'), '', true);
-      return;
-    }
+    const { error } = await supabase.from('walks').insert([{
+      name,
+      email,
+      year,
+      from,
+      to,
+      isotime,
+      maxspots,
+      type,
+      notes,
+      joinedspots: 0,
+      fromlat: location.lat,
+      fromlng: location.lng,
+      tolat: location.lat,   // temporary until you geocode destination
+      tolng: location.lng
+    }]);
 
-    document.getElementById('walk-form').reset();
-    closeModal();
+    if (error) throw error;
 
-    currentFilter = 'all';
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-filter="all"]').classList.add('active');
-    await loadWalks('all');
-
-    showToast('✅ Walk Posted!', `Your walk from ${from} → ${to} is now live.`);
-    setTimeout(() => document.getElementById('walks-section').scrollIntoView({ behavior: 'smooth' }), 300);
-  } catch {
-    showToast('⚠️ Network error', 'Could not connect to the server.', true);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Post Walk 🚶';
+    alert("Walk posted!");
+  } catch (err) {
+    alert("Error posting walk: " + err.message);
   }
+}
+
+// ---- MAPBOX ----
+async function openWalkMap(walkId) {
+  try {
+    const { data: walk, error } = await supabase.from('walks').select('*').eq('id', walkId).single();
+    if (error) throw error;
+
+    document.getElementById('map-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    if (walkMap) walkMap.remove();
+
+    walkMap = new mapboxgl.Map({
+      container: 'walk-map-container',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [walk.fromLng, walk.fromLat],
+      zoom: 15
+    });
+
+    walkMap.addControl(new mapboxgl.NavigationControl());
+
+    new mapboxgl.Marker({ color: 'blue' })
+      .setLngLat([walk.fromLng, walk.fromLat])
+      .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
+      .addTo(walkMap);
+
+    new mapboxgl.Marker({ color: 'red' })
+      .setLngLat([walk.toLng, walk.toLat])
+      .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
+      .addTo(walkMap);
+
+    drawWalkRoute(walk.fromLng, walk.fromLat, walk.toLng, walk.toLat);
+  } catch (err) {
+    alert('Could not load map: ' + err.message);
+  }
+}
+
+
+function closeWalkMap() {
+  document.getElementById('map-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  if (walkMap) { walkMap.remove(); walkMap = null; }
 }
 
 // ---- INIT ----
 loadWalks();
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.joinWalk = joinWalk;
+window.submitWalk = submitWalk;
+window.openWalkMap = openWalkMap;   // if you're using it
+window.closeWalkMap = closeWalkMap; // if you're using it

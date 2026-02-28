@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Find Walks — TrailMate</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="walks.css">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+   <link rel="stylesheet" href="styles.css" />
+   <link rel = "stylesheet" href = "walks.css" />
+
+  <!-- Include Supabase client library before your walks.js -->
+ <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Initialize Supabase
+    const supabase = createClient(
+      'https://zsujhugkllbnqidswkgt.supabase.co',
+      'your-anon-key'
+    );
+
+    console.log('Supabase initialized:', supabase);
+
+    // Your walks.js code can now safely use `supabase`
+  </script>
+  
+  <!-- Your module (after globals) -->
+  <script type="module" src="walks.js"></script>
 </head>
+
 <body>
 
 <!-- NAV -->
@@ -63,6 +90,17 @@
         <p>Loading walks...</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- WALK MAP MODAL -->
+<div class="modal-overlay" id="map-modal-overlay">
+  <div class="modal" style="width:90%; max-width:800px; height:500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Walk Map 🗺️</h3>
+      <button class="modal-close" onclick="closeWalkMap()">✕</button>
+    </div>
+    <div id="walk-map-container" style="width:100%; height:100%;"></div>
   </div>
 </div>
 
@@ -189,6 +227,5 @@
 
 <div class="toast-container" id="toast-container"></div>
 <script src="app.js"></script>
-<script src="walks.js"></script>
 </body>
 </html>

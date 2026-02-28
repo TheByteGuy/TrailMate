@@ -8,6 +8,28 @@ export const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
 );
 
+// ---- LOCATION ----
+function getCurrentLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+}
+
 // ---- STATE ----
 let currentFilter = 'all';
 const joinedWalks = new Set();
@@ -82,8 +104,8 @@ function renderWalks(walks) {
 }
 
 function buildCardHTML(walk) {
-  const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-  const fillPct = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
+  const spotsLeft = walk.maxspots - walk.joinedspots - 1;
+  const fillPct = Math.round(((walk.joinedspots + 1) / walk.maxspots) * 100);
   const isFull = spotsLeft <= 0;
   const isJoined = joinedWalks.has(walk.id);
   const tagsHTML = walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || '';
@@ -127,7 +149,7 @@ function buildCardHTML(walk) {
       <div class="walk-spots">
         <div class="walk-spots-text">
           <span>Group size</span>
-          <strong id="spots-count-${walk.id}">${walk.joinedSpots + 1} / ${walk.maxSpots} people</strong>
+          <strong id="spots-count-${walk.id}">${walk.joinedspots + 1} / ${walk.maxspots} people</strong>
         </div>
         <div class="spots-bar">
           <div class="spots-fill" id="spots-fill-${walk.id}" style="width:${fillPct}%"></div>
@@ -162,10 +184,10 @@ async function joinWalk(id) {
   btn.textContent = 'Joining...';
 
   try {
-    // Increment joinedSpots atomically using Supabase `increment`
+    // Increment joinedspots atomically using Supabase `increment`
     const { data: walk, error } = await supabase
       .from('walks')
-      .update({ joinedSpots: supabase.rpc('increment', { column: 'joinedSpots', value: 1 }) })
+      .update({ joinedspots: supabase.rpc('increment', { column: 'joinedspots', value: 1 }) })
       .eq('id', id)
       .select()
       .single();
@@ -191,36 +213,37 @@ async function submitWalk(e) {
   const year = document.getElementById('f-year').value;
   const from = document.getElementById('f-from').value.trim();
   const to = document.getElementById('f-to').value.trim();
-  const isoTime = document.getElementById('f-time').value;
-  const maxSpots = parseInt(document.getElementById('f-size').value, 10);
+  const isotime = document.getElementById('f-time').value;
+  const maxspots = parseInt(document.getElementById('f-size').value, 10);
   const type = document.getElementById('f-type').value;
   const notes = document.getElementById('f-notes').value.trim();
 
-  if (!email.toLowerCase().endsWith('@udel.edu')) {
-    alert('UD email required');
-    return;
-  }
-
-  const submitBtn = document.getElementById('submit-btn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Posting...';
-
   try {
-    const { data, error } = await supabase.from('walks').insert([{
-      name, email, year, from, to, isoTime, maxSpots, type, notes, joinedSpots: 0
+    // 👇 GET USER LOCATION
+    const location = await getCurrentLocation();
+
+    const { error } = await supabase.from('walks').insert([{
+      name,
+      email,
+      year,
+      from,
+      to,
+      isotime,
+      maxspots,
+      type,
+      notes,
+      joinedspots: 0,
+      fromlat: location.lat,
+      fromlng: location.lng,
+      tolat: location.lat,   // temporary until you geocode destination
+      tolng: location.lng
     }]);
 
     if (error) throw error;
 
-    document.getElementById('walk-form').reset();
-    closeModal();
-    await loadWalks(currentFilter);
-    alert('✅ Walk Posted!');
+    alert("Walk posted!");
   } catch (err) {
-    alert('Error posting walk: ' + err.message);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Post Walk 🚶';
+    alert("Error posting walk: " + err.message);
   }
 }
 
@@ -269,3 +292,10 @@ function closeWalkMap() {
 
 // ---- INIT ----
 loadWalks();
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.joinWalk = joinWalk;
+window.submitWalk = submitWalk;
+window.openWalkMap = openWalkMap;   // if you're using it
+window.closeWalkMap = closeWalkMap; // if you're using it

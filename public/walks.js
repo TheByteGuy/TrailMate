@@ -2,7 +2,10 @@
 
 let currentFilter = 'all';
 const joinedWalks = new Set();
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // ---- MODAL ----
 function openModal() {
   document.getElementById('modal-overlay').classList.add('open');
@@ -129,6 +132,8 @@ function buildCardHTML(walk) {
           onclick="joinWalk(${walk.id})"
           ${(isFull || isJoined) ? 'disabled' : ''}
         >${btnText}</button>
+
+        ${isJoined ? `<button class="btn-view-map" onclick="openWalkMap(${walk.id})">View Map 🗺️</button>` : ''}
       </div>
     </div>`;
 }
@@ -142,42 +147,32 @@ async function joinWalk(id) {
   btn.disabled = true;
   btn.textContent = 'Joining...';
 
-  try {
-    const res  = await fetch(`/api/walks/${id}/join`, { method: 'POST' });
-    const data = await res.json();
+  const email = document.getElementById('f-email')?.value || prompt('Enter your UD email');
+  if (!email?.toLowerCase().endsWith('@udel.edu')) {
+    alert('UD email required');
+    btn.disabled = false;
+    btn.textContent = 'Join Walk →';
+    return;
+  }
 
-    if (!res.ok) {
-      showToast('⚠️ ' + (data.error || 'Could not join walk.'), '', true);
-      btn.disabled = false;
-      btn.textContent = 'Join Walk →';
-      return;
-    }
+  try {
+    const res = await fetch('/api/join-walk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walkId: id, userEmail: email })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not join walk');
 
     joinedWalks.add(id);
-    const walk     = data.walk;
-    const spotsLeft = walk.maxSpots - walk.joinedSpots - 1;
-    const fillPct   = Math.round(((walk.joinedSpots + 1) / walk.maxSpots) * 100);
-
-    btn.textContent = '✓ Joined!';
-    btn.classList.add('joined');
-
-    const meta = document.getElementById(`spots-meta-${id}`);
-    if (meta) meta.innerHTML = `<span class="walk-meta-icon">👥</span> ${spotsLeft > 0 ? spotsLeft + ' spot' + (spotsLeft !== 1 ? 's' : '') + ' left' : 'Full'}`;
-
-    const fill = document.getElementById(`spots-fill-${id}`);
-    if (fill) fill.style.width = fillPct + '%';
-
-    const count = document.getElementById(`spots-count-${id}`);
-    if (count) count.textContent = `${walk.joinedSpots + 1} / ${walk.maxSpots} people`;
-
-    showToast(`🎉 You joined ${walk.name}'s walk!`, `${walk.from} → ${walk.to} · ${walk.time}`);
-  } catch {
-    showToast('⚠️ Network error', 'Could not connect to the server.', true);
+    renderWalks([data.walk]); // update walk card
+    showToast(`🎉 You joined ${data.walk.name}'s walk!`, `${data.walk.from} → ${data.walk.to} · ${data.walk.time}`);
+  } catch (err) {
+    alert(err.message);
     btn.disabled = false;
     btn.textContent = 'Join Walk →';
   }
 }
-
 // ---- SUBMIT WALK ----
 async function submitWalk(e) {
   e.preventDefault();
@@ -230,6 +225,44 @@ async function submitWalk(e) {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Post Walk 🚶';
   }
+} 
+
+// ---- MAPBOX ----
+let walkMap = null;
+
+async function openWalkMap(walkId) {
+  try {
+    // fetch latest walk from Supabase anon key (public read allowed)
+    const res = await fetch(`/api/walks/${walkId}`);
+    const walk = await res.json();
+
+    document.getElementById('map-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    if (walkMap) walkMap.remove();
+
+    walkMap = new mapboxgl.Map({
+      container: 'walk-map-container',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [walk.fromLng, walk.fromLat],
+      zoom: 15
+    });
+
+    walkMap.addControl(new mapboxgl.NavigationControl());
+
+    new mapboxgl.Marker({ color: 'blue' }).setLngLat([walk.fromLng, walk.fromLat]).setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`)).addTo(walkMap);
+    new mapboxgl.Marker({ color: 'red' }).setLngLat([walk.toLng, walk.toLat]).setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`)).addTo(walkMap);
+
+    drawWalkRoute(walk.fromLng, walk.fromLat, walk.toLng, walk.toLat);
+  } catch (err) {
+    alert('Could not load map: ' + err.message);
+  }
+}
+
+function closeWalkMap() {
+  document.getElementById('map-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  if (walkMap) { walkMap.remove(); walkMap = null; }
 }
 
 // ---- INIT ----

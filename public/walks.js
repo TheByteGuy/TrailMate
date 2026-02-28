@@ -281,7 +281,6 @@ async function openWalkMap(walkId) {
       .select('*')
       .eq('id', walkId)
       .single();
-
     if (error) throw error;
 
     document.getElementById('map-modal-overlay').classList.add('open');
@@ -291,24 +290,56 @@ async function openWalkMap(walkId) {
 
     walkMap = new mapboxgl.Map({
       container: 'walk-map-container',
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [walk.fromlng, walk.fromlat], // 🔥 FIXED
-      zoom: 15
+      style: 'mapbox://styles/mapbox/streets-v12', // realistic style
+      center: [walk.fromlng, walk.fromlat],
+      zoom: 16,
+      pitch: 45,
+      bearing: -20,
+      antialias: true
     });
 
-    walkMap.addControl(new mapboxgl.NavigationControl());
+    walkMap.on('style.load', () => {
+      // 3D buildings
+      const layers = walkMap.getStyle().layers;
+      const labelLayerId = layers.find(
+        layer => layer.type === 'symbol' && layer.layout['text-field']
+      )?.id;
 
-    new mapboxgl.Marker({ color: 'blue' })
-      .setLngLat([walk.fromlng, walk.fromlat])
-      .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
-      .addTo(walkMap);
+      walkMap.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#d6d6d6',
+          'fill-extrusion-height': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            15, 0,
+            16, ['get', 'height']
+          ],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.7
+        }
+      }, labelLayerId);
 
-    new mapboxgl.Marker({ color: 'red' })
-      .setLngLat([walk.tolng, walk.tolat])
-      .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
-      .addTo(walkMap);
+      // Markers
+      new mapboxgl.Marker({ color: '#2e86de' })
+        .setLngLat([walk.fromlng, walk.fromlat])
+        .setPopup(new mapboxgl.Popup().setText(`Start: ${walk.from}`))
+        .addTo(walkMap);
 
-    drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
+      new mapboxgl.Marker({ color: '#e74c3c' })
+        .setLngLat([walk.tolng, walk.tolat])
+        .setPopup(new mapboxgl.Popup().setText(`Destination: ${walk.to}`))
+        .addTo(walkMap);
+
+      // Draw route
+      drawWalkRoute(walk.fromlng, walk.fromlat, walk.tolng, walk.tolat);
+    });
 
   } catch (err) {
     alert('Could not load map: ' + err.message);
@@ -316,57 +347,45 @@ async function openWalkMap(walkId) {
 }
 
 async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+    );
+    const data = await res.json();
+    if (!data.routes?.length) return;
 
-  const response = await fetch(
-    `https://api.mapbox.com/directions/v5/mapbox/walking/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
-  );
+    const route = data.routes[0].geometry; // GeoJSON LineString
 
-  const data = await response.json();
-
-  if (!data.routes || !data.routes.length) {
-    console.error("No route found");
-    return;
-  }
-
-  const route = data.routes[0].geometry;
-
-  const addRoute = () => {
+    // Remove old route if exists
     if (walkMap.getSource('route')) {
-      walkMap.removeLayer('route');
+      if (walkMap.getLayer('route-line')) walkMap.removeLayer('route-line');
       walkMap.removeSource('route');
     }
 
-    walkMap.addSource('route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: route
-      }
-    });
+    // Add new route
+    walkMap.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
 
     walkMap.addLayer({
-      id: 'route',
+      id: 'route-line',
       type: 'line',
       source: 'route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#3b82f6',
-        'line-width': 5
-      }
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#1abc9c', 'line-width': 6 }
     });
-  };
 
-  if (walkMap.loaded()) {
-    addRoute();
-  } else {
-    walkMap.on('load', addRoute);
+    // Fit map to route bounds
+    const bounds = route.coordinates.reduce(
+      (b, coord) => b.extend(coord),
+      new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0])
+    );
+    walkMap.fitBounds(bounds, { padding: 80, maxZoom: 18, pitch: 45, bearing: -20 });
+
+  } catch (err) {
+    console.error('Failed to draw route:', err);
   }
 }
 
+// Close map
 function closeWalkMap() {
   document.getElementById('map-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';

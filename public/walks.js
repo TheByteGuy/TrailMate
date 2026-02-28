@@ -175,19 +175,19 @@ async function joinWalk(id) {
   btn.textContent = 'Joining...';
 
   try {
-    // 1. Fetch the CURRENT number of spots
+    // 1. Fetch the walk safely without guessing the column capitalization
     const { data: currentWalk, error: fetchError } = await supabase
       .from('walks')
-      .select('joinedspots, joinedSpots') // Check for both casings just in case
+      .select('*') 
       .eq('id', id)
       .single();
 
     if (fetchError) throw fetchError;
 
-    // Determine the current value, defaulting to 0
-    const currentSpots = currentWalk.joinedspots ?? currentWalk.joinedSpots ?? 0;
+    // 2. Safely read the lowercase value from the database
+    const currentSpots = currentWalk.joinedspots || 0;
 
-    // 2. Update the row with the new incremented value
+    // 3. Update the database using ONLY the lowercase column name
     const { data: walk, error: updateError } = await supabase
       .from('walks')
       .update({ joinedspots: currentSpots + 1 }) 

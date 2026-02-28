@@ -145,13 +145,13 @@ function buildCardHTML(walk) {
       <div class="walk-tags">${walk.tags?.map(t => `<span class="tag">${t}</span>`).join('') || ''}</div>
       ${walk.notes ? `<p class="walk-notes">"${walk.notes}"</p>` : ''}
 
-      <div class="walk-card-footer">
-        <span class="walk-card-time">Posted recently</span>
-        <button class="btn-join ${myWalk ? 'joined' : full ? 'full' : ''}" id="join-btn-${walk.id}" onclick="joinWalk(${walk.id})" ${full || myWalk ? 'disabled' : ''}>
-          ${myWalk ? '✓ Joined!' : full ? 'Walk Full' : 'Join Walk →'}
-        </button>
-        ${myWalk ? `<button class="btn-view-map" onclick="openWalkMap(${walk.id})">View Map 🗺️</button>` : ''}
-      </div>
+     <div class="walk-card-footer">
+      <span class="walk-card-time">Posted recently</span>
+      <button class="btn-join ${myWalk ? 'joined' : full ? 'full' : ''}" id="join-btn-${walk.id}" onclick="joinWalk('${walk.id}')" ${full || myWalk ? 'disabled' : ''}>
+        ${myWalk ? '✓ Joined!' : full ? 'Walk Full' : 'Join Walk →'}
+      </button>
+      ${myWalk ? `<button class="btn-view-map" onclick="openWalkMap('${walk.id}')">View Map 🗺️</button>` : ''}
+    </div>
     </div>`;
 }
 
@@ -175,15 +175,27 @@ async function joinWalk(id) {
   btn.textContent = 'Joining...';
 
   try {
-    // 🔹 Use increment instead of function
-    const { data: walk, error } = await supabase
+    // 1. Fetch the CURRENT number of spots
+    const { data: currentWalk, error: fetchError } = await supabase
       .from('walks')
-      .update({ joinedspots: supabase.raw('joinedspots + 1') }) // increment in DB
+      .select('joinedspots, joinedSpots') // Check for both casings just in case
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Determine the current value, defaulting to 0
+    const currentSpots = currentWalk.joinedspots ?? currentWalk.joinedSpots ?? 0;
+
+    // 2. Update the row with the new incremented value
+    const { data: walk, error: updateError } = await supabase
+      .from('walks')
+      .update({ joinedspots: currentSpots + 1 }) 
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
     joinedWalks.add(id);
 

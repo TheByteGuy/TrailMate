@@ -1,7 +1,7 @@
 /* community.js */
 
 let leaderboardData = [];
-let currentSort = 'walks';
+let currentSort = 'steps';
 
 // ---- Animated counters ----
 function animateCounters() {
@@ -50,7 +50,6 @@ function assignBadges(user) {
   user.badges = badges;
   user.badge = badges[0] || '';
 }
-
 // ---- Load stats from API ----
 async function loadStats() {
   try {
@@ -59,8 +58,11 @@ async function loadStats() {
     const cards = document.querySelectorAll('.comm-stat-number[data-target]');
     if (cards[0]) cards[0].dataset.target = data.activeStudents;
     if (cards[1]) cards[1].dataset.target = data.walksCompleted;
-    const totalWalks = leaderboardData.reduce((sum, u) => sum + (u.walks || 0), 0);
-    cards[2].dataset.target = totalWalks;
+    
+    // Calculate Total Steps instead of Total Walks for cards[2]
+    const totalSteps = leaderboardData.reduce((sum, u) => sum + (u.steps || 0), 0);
+    if (cards[2]) cards[2].dataset.target = totalSteps;
+    
   } catch (e) { /* use defaults */ }
   animateCounters();
 }
@@ -70,21 +72,28 @@ async function loadLeaderboard() {
   try {
     const res = await fetch('/api/leaderboard');
     leaderboardData = await res.json();
-
     leaderboardData.forEach(assignBadges);
   } catch (e) {
     leaderboardData = [];
   }
   renderLeaderboard();
 
-  // Update walks counter after leaderboard is loaded
+  // Update steps counter after leaderboard is loaded
   const cards = document.querySelectorAll('.comm-stat-number[data-target]');
   if (cards[2]) {
-    const totalWalks = leaderboardData.reduce((sum, u) => sum + (u.walks || 0), 0);
-    cards[2].dataset.target = totalWalks;
+    const totalSteps = leaderboardData.reduce((sum, u) => sum + (u.steps || 0), 0);
+    cards[2].dataset.target = totalSteps;
   }
+  
+  // Optional: If you also want to update miles dynamically, it would be cards[3]
+  if (cards[3]) {
+      const totalMiles = leaderboardData.reduce((sum, u) => sum + (u.miles || 0), 0);
+      cards[3].dataset.target = totalMiles;
+  }
+  
   animateCounters();
 }
+
 
 function sortData(data, key) {
   const sorted = [...data];

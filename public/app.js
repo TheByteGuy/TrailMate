@@ -3,10 +3,16 @@ import { supabase } from './supabase.js';
 
 // ---- NAV SCROLL ----
 const navbar = document.getElementById('navbar');
+
 if (navbar) {
-  window.addEventListener('scroll', () => {
+  const handleScroll = () => {
     navbar.classList.toggle('scrolled', window.scrollY > 60);
-  });
+  };
+
+  window.addEventListener('scroll', handleScroll);
+
+  // 🔥 Run once immediately so reloads don't break state
+  handleScroll();
 }
 
 // ---- INTERSECTION OBSERVER (fade-in) ----

@@ -44,6 +44,11 @@ let userLocation = null;   // cached once on modal open
 let fromCoords = null;     // set when user picks a suggestion for From
 let toCoords = null;       // set when user picks a suggestion for To
 
+// ---- LOCATION BROADCAST STATE ----
+let locationInterval = null;
+let locationChannel = null;
+const participantMarkers = new Map(); // userId -> mapboxgl.Marker
+
 const MAP_STYLES = {
   streets:    { url: 'mapbox://styles/mapbox/streets-v12',          pitch: 45, bearing: -20, buildings: true,  enhance: false },
   'sat-flat': { url: 'mapbox://styles/mapbox/satellite-streets-v12', pitch: 0,  bearing: 0,   buildings: false, enhance: true  },
@@ -497,6 +502,9 @@ function initMap(walk) {
 
     // Auto-start live GPS tracking
     geolocateControl.trigger();
+
+    // Broadcast own location and show all participants every 5s
+    startLocationBroadcast(walk.id);
   });
 }
 
@@ -600,6 +608,101 @@ async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
   }
 }
 
+// ---- LIVE LOCATION BROADCAST ----
+async function startLocationBroadcast(walkId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const userId = session.user.id;
+  const { data: profile } = await supabase
+    .from('profiles').select('username').eq('id', userId).single();
+  const username = profile?.username || 'Walker';
+
+  // Clear stale marker refs (map may have been recreated on theme switch)
+  participantMarkers.clear();
+
+  async function pushLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      await supabase.from('walk_locations').upsert({
+        walk_id: walkId,
+        user_id: userId,
+        username,
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'walk_id,user_id' });
+    });
+  }
+
+  await pushLocation();
+
+  // Start 5-second interval only if not already running
+  if (!locationInterval) {
+    locationInterval = setInterval(pushLocation, 5000);
+  }
+
+  // Render existing participants already in the walk
+  const { data: existing } = await supabase
+    .from('walk_locations').select('*').eq('walk_id', walkId);
+  existing?.forEach(row => { if (row.user_id !== userId) addOrMoveMarker(row); });
+
+  // Subscribe to realtime only if not already subscribed
+  if (!locationChannel) {
+    locationChannel = supabase
+      .channel(`walk-locations-${walkId}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'walk_locations',
+        filter: `walk_id=eq.${walkId}`
+      }, ({ eventType, new: newRow, old: oldRow }) => {
+        if (eventType === 'DELETE') {
+          const uid = oldRow?.user_id;
+          participantMarkers.get(uid)?.remove();
+          participantMarkers.delete(uid);
+        } else if (newRow?.user_id !== userId) {
+          addOrMoveMarker(newRow);
+        }
+      })
+      .subscribe();
+  }
+}
+
+function addOrMoveMarker(row) {
+  if (!walkMap) return;
+  const lngLat = [row.longitude, row.latitude];
+  if (participantMarkers.has(row.user_id)) {
+    participantMarkers.get(row.user_id).setLngLat(lngLat);
+  } else {
+    const el = document.createElement('div');
+    el.className = 'participant-marker';
+    el.textContent = row.username[0].toUpperCase();
+    el.title = `@${row.username}`;
+    const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat(lngLat)
+      .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(`@${row.username}`))
+      .addTo(walkMap);
+    participantMarkers.set(row.user_id, marker);
+  }
+}
+
+async function stopLocationBroadcast() {
+  clearInterval(locationInterval);
+  locationInterval = null;
+  if (locationChannel) {
+    await supabase.removeChannel(locationChannel);
+    locationChannel = null;
+  }
+  participantMarkers.forEach(m => m.remove());
+  participantMarkers.clear();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session && currentWalkData) {
+    await supabase.from('walk_locations')
+      .delete()
+      .eq('walk_id', currentWalkData.id)
+      .eq('user_id', session.user.id);
+  }
+}
+
 // Close map
 function closeWalkMap() {
   // Exit native fullscreen if active
@@ -612,6 +715,7 @@ function closeWalkMap() {
   document.getElementById('map-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (walkMap) { walkMap.remove(); walkMap = null; }
+  stopLocationBroadcast();
 }
 
 // ---- INIT ----

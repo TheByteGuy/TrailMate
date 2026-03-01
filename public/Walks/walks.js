@@ -35,6 +35,7 @@ function getCurrentLocation() {
 // ---- STATE ----
 let currentFilter = 'all';
 const joinedWalks = new Set();
+let currentUserId = null;
 let walkMap = null;
 let geolocateControl = null;
 let activeMapTheme = 'streets';
@@ -129,6 +130,7 @@ function buildCardHTML(walk) {
   const max = walk.maxSpots ?? walk.maxspots ?? 1;
   const joined = walk.joinedSpots ?? walk.joinedspots ?? 0;
   const left = max - joined - 1, full = left <= 0, myWalk = joinedWalks.has(walk.id);
+  const isCreator = currentUserId && walk.created_by === currentUserId;
   
   // 2. Compact date/time math
   const d = new Date(walk.isoTime || walk.isotime), now = new Date();
@@ -166,10 +168,16 @@ function buildCardHTML(walk) {
 
      <div class="walk-card-footer">
       <span class="walk-card-time">Posted recently</span>
-      <button class="btn-join ${myWalk ? 'joined' : full ? 'full' : ''}" id="join-btn-${walk.id}" onclick="joinWalk('${walk.id}')" ${full || myWalk ? 'disabled' : ''}>
-        ${myWalk ? '✓ Joined!' : full ? 'Walk Full' : 'Join Walk →'}
-      </button>
-      ${myWalk ? `<button class="btn-view-map" onclick="openWalkMap('${walk.id}')">View Map 🗺️</button>` : ''}
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        ${isCreator
+          ? `<button class="btn-end-walk" onclick="endWalk('${walk.id}')">End Walk 🛑</button>`
+          : `<button class="btn-join ${myWalk ? 'joined' : full ? 'full' : ''}" id="join-btn-${walk.id}" onclick="joinWalk('${walk.id}')" ${full || myWalk ? 'disabled' : ''}>
+               ${myWalk ? '✓ Joined!' : full ? 'Walk Full' : 'Join Walk →'}
+             </button>`
+        }
+        ${myWalk ? `<button class="btn-view-map" onclick="openWalkMap('${walk.id}')">View Map 🗺️</button>` : ''}
+        ${isCreator ? `<button class="btn-view-map" onclick="openWalkMap('${walk.id}')">View Map 🗺️</button>` : ''}
+      </div>
     </div>
     </div>`;
 }
@@ -205,40 +213,39 @@ async function joinWalk(id) {
   const btn = document.getElementById(`join-btn-${id}`);
   if (!btn || btn.disabled) return;
 
-  // Require auth
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    showLoginPrompt();
-    return;
-  }
+  if (!session) { showLoginPrompt(); return; }
 
   btn.disabled = true;
   btn.textContent = 'Joining...';
 
   try {
-    const { data: currentWalk, error: fetchError } = await supabase
-      .from('walks')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // Insert membership row — primary key (walk_id, user_id) rejects duplicates
+    const { error: memberError } = await supabase
+      .from('walk_members')
+      .insert({ walk_id: id, user_id: session.user.id });
 
-    if (fetchError) throw fetchError;
+    // Code 23505 = unique violation: user already joined on another device
+    if (memberError && memberError.code !== '23505') throw memberError;
 
-    const currentSpots = currentWalk.joinedspots || 0;
+    const alreadyJoined = memberError?.code === '23505';
 
-    const { data: walk, error: updateError } = await supabase
-      .from('walks')
-      .update({ joinedspots: currentSpots + 1 })
-      .eq('id', id)
-      .select()
-      .single();
+    if (!alreadyJoined) {
+      // First join — increment the spot count
+      const { data: currentWalk, error: fetchError } = await supabase
+        .from('walks').select('joinedspots, name').eq('id', id).single();
+      if (fetchError) throw fetchError;
 
-    if (updateError) throw updateError;
+      const { data: walk, error: updateError } = await supabase
+        .from('walks')
+        .update({ joinedspots: (currentWalk.joinedspots || 0) + 1 })
+        .eq('id', id).select().single();
+      if (updateError) throw updateError;
+
+      window.showToast?.(`Joined ${walk.name}'s walk!`, 'The map is loading...');
+    }
 
     joinedWalks.add(id);
-
-    window.showToast?.(`Joined ${walk.name}'s walk!`, 'The map is loading...');
-
     openWalkMap(id);
     await loadWalks(currentFilter);
 
@@ -247,6 +254,19 @@ async function joinWalk(id) {
     btn.disabled = false;
     btn.textContent = 'Join Walk →';
   }
+}
+
+// ---- LOAD USER MEMBERSHIPS ----
+// Restores joinedWalks from DB on page load / device switch
+async function loadUserMemberships() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  currentUserId = session.user.id;
+  const { data } = await supabase
+    .from('walk_members')
+    .select('walk_id')
+    .eq('user_id', session.user.id);
+  if (data) data.forEach(m => joinedWalks.add(m.walk_id));
 }
 
 // ---- LOCATION AUTOCOMPLETE ----
@@ -365,10 +385,14 @@ async function submitWalk(e) {
       [tolng, tolat] = geoData.features[0].center;
     }
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('You must be signed in to post a walk.');
+
     const { error } = await supabase.from('walks').insert([{
       name, email, year, from, to, isotime, maxspots, type, notes,
       joinedspots: 0,
-      fromlat, fromlng, tolat, tolng
+      fromlat, fromlng, tolat, tolng,
+      created_by: session.user.id
     }]);
 
     if (error) throw error;
@@ -398,9 +422,8 @@ async function openWalkMap(walkId) {
     document.getElementById('map-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    document.querySelectorAll('.map-theme-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === activeMapTheme);
-    });
+    const sel = document.getElementById('map-theme-select');
+    if (sel) sel.value = activeMapTheme;
 
     if (walkMap) { walkMap.remove(); walkMap = null; }
     initMap(walk);
@@ -425,8 +448,6 @@ function initMap(walk) {
     bearing: theme.bearing,
     antialias: true
   });
-
-  walkMap.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
   geolocateControl = new mapboxgl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
@@ -483,13 +504,62 @@ function switchMapTheme(theme) {
   if (!currentWalkData) return;
   activeMapTheme = theme;
 
-  document.querySelectorAll('.map-theme-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === theme);
-  });
+  const sel = document.getElementById('map-theme-select');
+  if (sel) sel.value = theme;
 
   if (walkMap) { walkMap.remove(); walkMap = null; }
   initMap(currentWalkData);
 }
+
+function toggleMapFullscreen() {
+  const modal   = document.querySelector('.map-modal');
+  const container = document.getElementById('walk-map-container');
+  const btn     = document.getElementById('map-fullscreen-btn');
+
+  const inNativeFs = document.fullscreenElement || document.webkitFullscreenElement;
+
+  if (inNativeFs) {
+    // Exit native fullscreen
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    return;
+  }
+
+  if (modal.classList.contains('map-fullscreen')) {
+    // Exit CSS fullscreen
+    modal.classList.remove('map-fullscreen');
+    btn.classList.remove('active');
+    btn.title = 'Fullscreen';
+    walkMap?.resize();
+    return;
+  }
+
+  // Try native fullscreen first; fall back to CSS fullscreen (iOS)
+  const req = container.requestFullscreen || container.webkitRequestFullscreen;
+  if (req) {
+    req.call(container).catch(() => enterCssFullscreen(modal, btn));
+  } else {
+    enterCssFullscreen(modal, btn);
+  }
+}
+
+function enterCssFullscreen(modal, btn) {
+  modal.classList.add('map-fullscreen');
+  btn.classList.add('active');
+  btn.title = 'Exit fullscreen';
+  walkMap?.resize();
+}
+
+// Keep button state in sync when native fullscreen exits (e.g. via Esc)
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => {
+  document.addEventListener(ev, () => {
+    const btn = document.getElementById('map-fullscreen-btn');
+    if (!btn) return;
+    const inFs = document.fullscreenElement || document.webkitFullscreenElement;
+    btn.classList.toggle('active', !!inFs);
+    btn.title = inFs ? 'Exit fullscreen' : 'Fullscreen';
+    walkMap?.resize();
+  });
+});
 
 async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
   try {
@@ -532,16 +602,36 @@ async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
 
 // Close map
 function closeWalkMap() {
+  // Exit native fullscreen if active
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+  }
+  // Remove CSS fullscreen
+  document.querySelector('.map-modal')?.classList.remove('map-fullscreen');
+
   document.getElementById('map-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (walkMap) { walkMap.remove(); walkMap = null; }
 }
 
 // ---- INIT ----
-loadWalks();
+loadUserMemberships().then(() => loadWalks());
 
 setupAutocomplete('f-from', coords => { fromCoords = coords; });
 setupAutocomplete('f-to',   coords => { toCoords   = coords; });
+
+// ---- END WALK (creator only) ----
+async function endWalk(id) {
+  if (!confirm('End this walk? It will be permanently deleted for everyone.')) return;
+  try {
+    const { error } = await supabase.from('walks').delete().eq('id', id);
+    if (error) throw error;
+    window.showToast?.('Walk ended', 'Your walk has been removed.');
+    await loadWalks(currentFilter);
+  } catch (err) {
+    window.showToast?.('Could not end walk', err.message, true);
+  }
+}
 
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -550,3 +640,5 @@ window.submitWalk = submitWalk;
 window.openWalkMap = openWalkMap;
 window.closeWalkMap = closeWalkMap;
 window.switchMapTheme = switchMapTheme;
+window.toggleMapFullscreen = toggleMapFullscreen;
+window.endWalk = endWalk;

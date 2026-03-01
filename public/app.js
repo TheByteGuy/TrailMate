@@ -1,4 +1,5 @@
 /* app.js — shared utilities for all TrailMate pages */
+import { supabase } from './supabase.js';
 
 // ---- NAV SCROLL ----
 const navbar = document.getElementById('navbar');
@@ -32,3 +33,21 @@ function showToast(title, message, isWarning = false) {
     setTimeout(() => toast.remove(), 400);
   }, 4000);
 }
+window.showToast = showToast;
+
+// ---- AUTH NAV ----
+async function updateNavForAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const link = document.getElementById('nav-profile-link');
+  if (!link) return;
+  if (session) {
+    const { data: profile } = await supabase
+      .from('profiles').select('username').eq('id', session.user.id).single();
+    link.textContent = profile ? '@' + profile.username : 'Profile';
+    link.href = '/profile.html';
+  } else {
+    link.textContent = 'Log In';
+    link.href = '/auth.html';
+  }
+}
+updateNavForAuth();

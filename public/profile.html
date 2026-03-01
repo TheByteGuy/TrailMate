@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — TrailMate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="profile.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/walks.html">Find Walks</a></li>
+    <li><a href="/safety.html">Safety</a></li>
+    <li><a href="/community.html">Community</a></li>
+    <li><a href="/profile.html" id="nav-profile-link" class="nav-active">Profile</a></li>
+    <li><a href="/walks.html" class="nav-cta">+ Post a Walk</a></li>
+  </ul>
+  <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-badge">👤 My Profile</div>
+    <h1 class="page-hero-title" id="hero-username">Loading…</h1>
+    <p class="page-hero-subtitle" id="hero-subtitle">TrailMate member</p>
+  </div>
+</div>
+
+<!-- PROFILE CONTENT -->
+<div class="profile-section">
+
+  <!-- Profile Card -->
+  <div class="profile-card" id="profile-card">
+    <div class="profile-avatar-lg avatar avatar-blue" id="profile-avatar">?</div>
+    <div class="profile-username" id="profile-username">Loading…</div>
+    <div class="profile-bio" id="profile-bio"></div>
+
+    <!-- Bio edit area (own profile only) -->
+    <div class="profile-bio-edit" id="bio-edit-area">
+      <textarea class="profile-bio-textarea" id="bio-textarea" placeholder="Tell the community a bit about yourself…" maxlength="200"></textarea>
+      <div class="profile-bio-actions">
+        <button class="btn-cancel-bio" onclick="cancelEditBio()">Cancel</button>
+        <button class="btn-save-bio" onclick="saveBio()">Save</button>
+      </div>
+    </div>
+
+    <!-- Follower / Following counts -->
+    <div class="profile-stats-row">
+      <div class="profile-stat">
+        <div class="profile-stat-number" id="stat-followers">0</div>
+        <div class="profile-stat-label">Followers</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-number" id="stat-following">0</div>
+        <div class="profile-stat-label">Following</div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="profile-actions" id="profile-actions">
+      <!-- Populated by JS: edit bio + logout (own) OR follow/unfollow (other) -->
+    </div>
+  </div>
+
+  <!-- Friend Search -->
+  <div class="profile-panel">
+    <div class="profile-panel-title">Find Friends</div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search by username…" onkeydown="if(event.key==='Enter') searchUsers()">
+      <button onclick="searchUsers()">Search</button>
+    </div>
+    <div class="user-result-list" id="search-results"></div>
+  </div>
+
+  <!-- Network: Following / Followers -->
+  <div class="profile-panel">
+    <div class="profile-panel-title">Your Network</div>
+    <div class="friends-tabs">
+      <button class="friends-tab active" id="tab-following" onclick="showNetworkTab('following')">Following</button>
+      <button class="friends-tab" id="tab-followers" onclick="showNetworkTab('followers')">Followers</button>
+    </div>
+    <div class="user-result-list" id="network-list"></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+          <div class="nav-logo-icon">🥾</div>
+          <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
+        </a>
+        <p class="footer-brand-desc">A student-built platform for safe, peer-supported walks across the University of Delaware campus and beyond.</p>
+        <div class="footer-ud-badge">🏛️ University of Delaware Community</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-col-links">
+          <li><a href="/walks.html">Find a Walk</a></li>
+          <li><a href="/walks.html">Post a Walk</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/safety.html">Safety Features</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Safety</div>
+        <ul class="footer-col-links">
+          <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
+          <li><a href="/safety.html">Safety Guidelines</a></li>
+          <li><a href="/safety.html#report">Report Concern</a></li>
+          <li><a href="/community.html">Community Standards</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">About</div>
+        <ul class="footer-col-links">
+          <li><a href="/community.html">Our Story</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
+      <span>University of Delaware, Newark, DE 19716</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="profile.js"></script>
+</body>
+</html>

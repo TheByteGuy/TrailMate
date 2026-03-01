@@ -23,6 +23,7 @@
     <li><a href="/Walks/walks.html">Find Walks</a></li>
     <li><a href="/Safety/safety.html">Safety</a></li>
     <li><a href="/Community/community.html" class="nav-active">Community</a></li>
+    <li><a href="/auth.html" id="nav-profile-link">Log In</a></li>
     <li><a href="/Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
   <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
@@ -33,83 +34,9 @@
   <div class="page-hero-inner">
     <div class="page-hero-badge">🏆 Blue Hen Community</div>
     <h1 class="page-hero-title">The TrailMate <span class="gold">Community</span></h1>
-    <p class="page-hero-subtitle">See who's walking the most, discover safety tips from real students, and track the community's impact on campus safety.</p>
+    <p class="page-hero-subtitle">Connect with fellow Blue Hens and walk safer together.</p>
   </div>
 </div>
-
-<!-- LIVE STATS -->
-<div class="stats-banner">
-  <div class="stats-banner-inner">
-    <div class="stat-block">
-      <div class="stat-number" id="stat-students" data-target="342">0</div>
-      <div class="stat-label">Active Students</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-number" id="stat-walks" data-target="1247">0</div>
-      <div class="stat-label">Walks Completed</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-number" id="stat-safe" data-target="1247">0</div>
-      <div class="stat-label">Safe Arrivals</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-number" id="stat-rating">4.9★</div>
-      <div class="stat-label">Avg. Rating</div>
-    </div>
-  </div>
-</div>
-
-<!-- LEADERBOARD -->
-<section class="community-section" id="leaderboard">
-  <div class="section-inner">
-    <div class="section-label">Top Walkers</div>
-    <h2 class="section-title">Leaderboard</h2>
-    <p class="section-subtitle">The Blue Hens who walk the most and keep the community safest.</p>
-
-    <div class="leaderboard-list" id="leaderboard-list">
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading leaderboard...</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CAMPUS TIPS -->
-<section class="community-section" id="tips">
-  <div class="section-inner">
-    <div class="section-label">From Students, For Students</div>
-    <h2 class="section-title">Campus Safety Tips</h2>
-    <p class="section-subtitle">Real advice from the TrailMate community on staying safe around Newark.</p>
-
-    <div class="tips-grid" id="tips-grid">
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading tips...</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- RECENT ACTIVITY -->
-<section class="community-section activity-section" id="activity">
-  <div class="section-inner activity-inner">
-    <div class="section-label" style="color:var(--gold);">Live Feed</div>
-    <h2 class="section-title" style="color:var(--white);">Recent Activity</h2>
-    <p class="section-subtitle" style="color:rgba(255,255,255,0.6);">Walks happening right now and completed recently.</p>
-
-    <div class="activity-feed" id="activity-feed">
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p style="color:rgba(255,255,255,0.5);">Loading activity...</p>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:32px;">
-      <a href="/Walks/walks.html" class="btn-primary">🗺️ See All Active Walks</a>
-    </div>
-  </div>
-</section>
 
 <!-- FOOTER -->
 <footer>
@@ -159,7 +86,7 @@
 </footer>
 
 <div class="toast-container" id="toast-container"></div>
-<script src="../app.js"></script>
+<script type="module" src="../app.js"></script>
 <script src="community.js"></script>
 </body>
 </html>

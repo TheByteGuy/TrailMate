@@ -23,16 +23,8 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
   <!-- Include Supabase client library before your walks.js -->
-    <script type="module">
+  <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  // Initialize Supabase
-    const supabase = createClient(
-      'https://zsujhugkllbnqidswkgt.supabase.co',
-      'your-anon-key'
-    );
-
-    console.log('Supabase initialized:', supabase);
   </script>
   
   <!-- Your module (after globals) -->
@@ -162,8 +154,8 @@
       <div>
         <div class="footer-col-title">About</div>
         <ul class="footer-col-links">
-          <li><a href="/Community/community.html">Our Story</a></li>
-          <li><a href="#">Contact Us</a></li>
+          <li><a href="/About/about.html">About TrailMate</a></li>
+          <li><a href="/About/about.html#team">Say Hi To The Team</a></li>
           <li><a href="#">Privacy Policy</a></li>
           <li><a href="#">Terms of Use</a></li>
         </ul>

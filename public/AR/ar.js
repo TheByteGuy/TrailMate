@@ -587,72 +587,385 @@ function renderFrame() {
   if (dist !== null && dist < 40)  { color = '#FFD200'; glow = 'rgba(255,210,0,0.5)'; }
   if (dist !== null && dist < 12)  { color = '#22c55e'; glow = 'rgba(34,197,94,0.55)'; }
 
-  const cx = W / 2, cy = H / 2 + 20;
-  const R  = Math.min(W, H) * 0.27;
+  // 3-D ground-plane AR path + arrow
+  const time = Date.now() / 1000;
+  draw3DGroundAR(ctx, W, H, relAngle, dist ?? 50, time, color, glow);
 
-  // Soft guide ring
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.restore();
-
-  // Direction arrow
-  drawArrow(ctx, cx, cy, relAngle, R * 0.7, color, glow);
-
-  // Distance label below arrow
+  // Distance + bearing HUD floating near the horizon
   if (dist !== null) {
     ctx.save();
-    ctx.shadowBlur  = 10;
-    ctx.shadowColor = 'rgba(0,0,0,0.9)';
-    ctx.font        = 'bold 20px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillStyle   = '#fff';
     ctx.textAlign   = 'center';
-    ctx.fillText(fmtDist(dist), cx, cy + R + 30);
+    ctx.shadowBlur  = 14;
+    ctx.shadowColor = 'rgba(0,0,0,0.95)';
+    ctx.font        = `bold 26px "Plus Jakarta Sans", system-ui, sans-serif`;
+    ctx.fillStyle   = color;
+    ctx.fillText(fmtDist(dist), W / 2, H * 0.34);
+    ctx.font        = '13px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillStyle   = 'rgba(255,255,255,0.55)';
+    ctx.fillText(`${bearingToCardinal(relAngle)} · ${Math.round(relAngle)}°`, W / 2, H * 0.34 + 22);
     ctx.restore();
   }
+}
 
-  // Cardinal label
+// ─────────────────────────────────────────────────────────────────
+// 3-D GROUND-PLANE AR RENDERING
+// Perspective-projects a path ribbon + 3-D foreshortened arrow onto
+// the camera feed, simulating ground-level AR wayfinding.
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Entry point — draws everything for one frame.
+ * @param relAngleDeg  0 = straight ahead, 90 = right, 270/-90 = left
+ */
+function draw3DGroundAR(ctx, W, H, relAngleDeg, distM, time, color, glow) {
+  // Normalise to -180 … +180 (negative = left, positive = right)
+  let ang = ((relAngleDeg % 360) + 360) % 360;
+  if (ang > 180) ang -= 360;
+
+  // ── Perspective layout ────────────────────────────────────────
+  const horizonY  = H * 0.40;          // where the ground meets the sky
+  const startX    = W * 0.50;
+  const startY    = H * 0.91;          // user's feet (just inside canvas)
+  const baseHalfW = W * 0.095;         // ribbon half-width at the base
+
+  // Vanishing point shifts sideways with bearing
+  const vpShift = Math.sin(ang * Math.PI / 180) * W * 0.44;
+  const vpX     = W * 0.50 + vpShift;
+  const vpY     = horizonY;
+
+  // Asymmetric bezier control point for natural-looking curve
+  const cpX = startX + (vpX - startX) * 0.35;
+  const cpY = startY + (vpY - startY) * 0.50;
+
+  // ── Build ribbon geometry ─────────────────────────────────────
+  const ribbon = buildRibbon(startX, startY, cpX, cpY, vpX, vpY, baseHalfW, 54);
+
+  // ── Draw — back to front ──────────────────────────────────────
+  drawRibbonFill(ctx, ribbon);
+  drawGroundGrid(ctx, ribbon, color);
+  drawRibbonEdges(ctx, ribbon, color, glow);
+  drawCenterDashes(ctx, ribbon, color, glow, time);
+  drawChevrons(ctx, ribbon, color, glow, time);
+  draw3DArrow(ctx, startX, startY, vpX, vpY, baseHalfW, color, glow);
+
+  // U-turn hint when target is mostly behind the user
+  if (Math.abs(ang) > 115) {
+    drawUTurnHint(ctx, W, H, ang, color, glow);
+  }
+}
+
+// ── Quadratic bezier ribbon ───────────────────────────────────────
+function buildRibbon(sx, sy, cpx, cpy, vpx, vpy, hw0, steps) {
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t  = i / steps;
+    const mt = 1 - t;
+    const px = mt*mt*sx  + 2*mt*t*cpx + t*t*vpx;
+    const py = mt*mt*sy  + 2*mt*t*cpy + t*t*vpy;
+    // Tangent
+    const tx = 2*mt*(cpx - sx)  + 2*t*(vpx - cpx);
+    const ty = 2*mt*(cpy - sy)  + 2*t*(vpy - cpy);
+    const tl = Math.sqrt(tx*tx + ty*ty) || 1;
+    const nx = -ty / tl,  ny = tx / tl;  // left-hand normal
+    const hw = hw0 * Math.pow(1 - t, 0.76);
+    pts.push({
+      px, py, nx, ny, hw, t,
+      lx: px + nx * hw, ly: py + ny * hw,
+      rx: px - nx * hw, ry: py - ny * hw,
+      tangAngle: Math.atan2(ty, tx),
+    });
+  }
+  return pts;
+}
+
+// ── Semi-transparent dark fill for the road surface ───────────────
+function drawRibbonFill(ctx, ribbon) {
+  const n = ribbon.length;
   ctx.save();
-  ctx.shadowBlur  = 6;
-  ctx.shadowColor = 'rgba(0,0,0,0.9)';
-  ctx.font        = '13px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle   = 'rgba(255,255,255,0.6)';
-  ctx.textAlign   = 'center';
-  ctx.fillText(bearingToCardinal(relAngle), cx, cy + R + 52);
+  ctx.beginPath();
+  ctx.moveTo(ribbon[0].lx, ribbon[0].ly);
+  for (let i = 1; i < n; i++) ctx.lineTo(ribbon[i].lx, ribbon[i].ly);
+  for (let i = n - 1; i >= 0; i--) ctx.lineTo(ribbon[i].rx, ribbon[i].ry);
+  ctx.closePath();
+  // Gradient: more opaque near viewer, fading to transparent at horizon
+  const grad = ctx.createLinearGradient(ribbon[0].px, ribbon[0].py, ribbon[n-1].px, ribbon[n-1].py);
+  grad.addColorStop(0,   'rgba(0,5,30,0.45)');
+  grad.addColorStop(0.6, 'rgba(0,5,30,0.20)');
+  grad.addColorStop(1,   'rgba(0,5,30,0.00)');
+  ctx.fillStyle = grad;
+  ctx.fill();
   ctx.restore();
 }
 
-function drawArrow(ctx, cx, cy, angleDeg, size, color, glow) {
-  const rad = (angleDeg - 90) * Math.PI / 180; // 0° → points up
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(rad);
+// ── Perspective grid lines across the ribbon (depth cue) ──────────
+function drawGroundGrid(ctx, ribbon, color) {
+  const n = ribbon.length;
+  const markerTs = [0.18, 0.36, 0.54, 0.70, 0.83];
+  for (const t0 of markerTs) {
+    const idx = Math.round(t0 * (n - 1));
+    const pt  = ribbon[idx];
+    if (!pt) continue;
+    ctx.save();
+    ctx.globalAlpha = 0.28 * (1 - t0 * 0.6);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = Math.max(0.5, 1.5 * (1 - t0));
+    ctx.lineCap     = 'butt';
+    ctx.beginPath();
+    ctx.moveTo(pt.lx, pt.ly);
+    ctx.lineTo(pt.rx, pt.ry);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 
-  ctx.shadowBlur  = 28;
+// ── Glowing edge lines ────────────────────────────────────────────
+function drawRibbonEdges(ctx, ribbon, color, glow) {
+  const n = ribbon.length;
+  for (const side of ['l', 'r']) {
+    const xk = side === 'l' ? 'lx' : 'rx';
+    const yk = side === 'l' ? 'ly' : 'ry';
+
+    // Wide soft outer glow
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(ribbon[0][xk], ribbon[0][yk]);
+    for (let i = 1; i < n; i++) ctx.lineTo(ribbon[i][xk], ribbon[i][yk]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 8;
+    ctx.globalAlpha = 0.18;
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+    ctx.restore();
+
+    // Core bright line with shadow glow
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(ribbon[0][xk], ribbon[0][yk]);
+    for (let i = 1; i < n; i++) ctx.lineTo(ribbon[i][xk], ribbon[i][yk]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2.2;
+    ctx.lineCap     = 'round';
+    ctx.shadowBlur  = 16;
+    ctx.shadowColor = glow;
+    ctx.stroke();
+    // Second pass for extra bloom
+    ctx.lineWidth  = 0.8;
+    ctx.shadowBlur = 30;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── Animated centre-lane dashes ───────────────────────────────────
+function drawCenterDashes(ctx, ribbon, color, glow, time) {
+  const n       = ribbon.length;
+  const speed   = 0.52;
+  const dashLen = 0.06;
+  const gapLen  = 0.04;
+  const period  = dashLen + gapLen;
+  const offset  = (time * speed) % period;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineCap     = 'round';
+  ctx.shadowBlur  = 10;
   ctx.shadowColor = glow;
 
-  // Arrow shape
+  let drawing = false;
   ctx.beginPath();
-  ctx.moveTo(0,           -size);           // tip
-  ctx.lineTo( size * 0.38, size * 0.22);    // right wing
-  ctx.lineTo( size * 0.16, size * 0.02);    // right notch
-  ctx.lineTo( size * 0.16, size * 0.52);    // right tail
-  ctx.lineTo(-size * 0.16, size * 0.52);    // left tail
-  ctx.lineTo(-size * 0.16, size * 0.02);    // left notch
-  ctx.lineTo(-size * 0.38, size * 0.22);    // left wing
-  ctx.closePath();
+  for (let i = 0; i < n; i++) {
+    const t     = ribbon[i].t;
+    const phase = ((t - (-offset)) % period + period) % period;
+    const lw    = Math.max(0.6, 2.0 * (1 - t * 0.88));
+    ctx.lineWidth = lw;
+    if (phase < dashLen) {
+      if (!drawing) { ctx.moveTo(ribbon[i].px, ribbon[i].py); drawing = true; }
+      else            ctx.lineTo(ribbon[i].px, ribbon[i].py);
+    } else {
+      if (drawing) { ctx.stroke(); ctx.beginPath(); drawing = false; }
+    }
+  }
+  if (drawing) ctx.stroke();
+  ctx.restore();
+}
 
-  ctx.fillStyle   = color;
+// ── Animated V-chevrons marching toward destination ───────────────
+function drawChevrons(ctx, ribbon, color, glow, time) {
+  const n      = ribbon.length;
+  const count  = 6;
+  const speed  = 0.58;
+  const offset = (time * speed) % 1;
+
+  for (let c = 0; c < count; c++) {
+    const t0 = ((c / count) + offset) % 1;
+    if (t0 < 0.03 || t0 > 0.96) continue;
+
+    const idx = Math.round(t0 * (n - 1));
+    const pt  = ribbon[idx];
+    if (!pt) continue;
+
+    const sz    = pt.hw * 0.78;
+    const alpha = (1 - t0) * 0.9;
+    const lw    = Math.max(0.5, 2.4 * (1 - t0));
+
+    ctx.save();
+    ctx.translate(pt.px, pt.py);
+    // Rotate so the V opens backward (tip points forward along path)
+    ctx.rotate(pt.tangAngle + Math.PI / 2);
+    ctx.globalAlpha  = alpha;
+    ctx.strokeStyle  = color;
+    ctx.lineWidth    = lw;
+    ctx.lineCap      = 'round';
+    ctx.lineJoin     = 'round';
+    ctx.shadowBlur   = 10;
+    ctx.shadowColor  = glow;
+    ctx.beginPath();
+    ctx.moveTo(-sz,  sz * 0.55);   // left arm (backward)
+    ctx.lineTo(0,   -sz * 0.60);   // tip (forward = up in local space)
+    ctx.lineTo( sz,  sz * 0.55);   // right arm (backward)
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── 3-D foreshortened ground arrow at the user's feet ────────────
+function draw3DArrow(ctx, sx, sy, vpX, vpY, hw, color, glow) {
+  // Forward / lateral unit vectors
+  const dx  = vpX - sx, dy  = vpY - sy;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const ux  = dx / len, uy  = dy / len;   // forward (toward VP)
+  const nx  = -uy,      ny  =  ux;         // left-hand normal
+
+  // Arrow geometry (all in world-ish units relative to sx,sy)
+  const aFwd  = hw * 2.8;   // tip distance ahead
+  const aWing = hw * 1.65;  // max half-width at wings
+  const sHalf = hw * 0.44;  // shaft half-width
+  const sTail = hw * 1.25;  // shaft length (behind center)
+
+  // Key vertices
+  const tip  = v(sx + ux * aFwd * 0.60, sy + uy * aFwd * 0.60);
+  const rwA  = v(sx + nx * aWing        + ux * aFwd * 0.04, sy + ny * aWing        + uy * aFwd * 0.04);
+  const rwB  = v(sx + nx * sHalf        + ux * aFwd * 0.12, sy + ny * sHalf        + uy * aFwd * 0.12);
+  const rTail = v(sx + nx * sHalf        - ux * sTail,       sy + ny * sHalf        - uy * sTail);
+  const lTail = v(sx - nx * sHalf        - ux * sTail,       sy - ny * sHalf        - uy * sTail);
+  const lwB  = v(sx - nx * sHalf        + ux * aFwd * 0.12, sy - ny * sHalf        + uy * aFwd * 0.12);
+  const lwA  = v(sx - nx * aWing        + ux * aFwd * 0.04, sy - ny * aWing        + uy * aFwd * 0.04);
+
+  const topFace = [tip, rwA, rwB, rTail, lTail, lwB, lwA];
+
+  // ── Ground shadow (offset down-screen = viewer-side depth) ─────
+  const sd = 7;
+  ctx.save();
+  ctx.beginPath();
+  topFace.forEach((p, i) => i ? ctx.lineTo(p.x + sd, p.y + sd) : ctx.moveTo(p.x + sd, p.y + sd));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.filter    = 'blur(4px)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── Side face — tail edge visible to viewer ────────────────────
+  // "Down" direction in screen space for the extrusion
+  const thick = 9;
+  const downX = -ux * 0.25;        // slightly backward
+  const downY = -uy * 0.25 + 1.0;  // biased toward screen-bottom
+
+  ctx.save();
+  // Tail face (the flat end closest to viewer)
+  ctx.beginPath();
+  ctx.moveTo(rTail.x, rTail.y);
+  ctx.lineTo(lTail.x, lTail.y);
+  ctx.lineTo(lTail.x + downX * thick, lTail.y + downY * thick);
+  ctx.lineTo(rTail.x + downX * thick, rTail.y + downY * thick);
+  ctx.closePath();
+  ctx.fillStyle = shiftColor(color, -0.48);
+  ctx.fill();
+  // Right flank
+  ctx.beginPath();
+  ctx.moveTo(rwA.x, rwA.y); ctx.lineTo(rwB.x, rwB.y); ctx.lineTo(rTail.x, rTail.y);
+  ctx.lineTo(rTail.x + downX * thick * 0.7, rTail.y + downY * thick * 0.7);
+  ctx.lineTo(rwB.x  + downX * thick * 0.4,  rwB.y  + downY * thick * 0.4);
+  ctx.lineTo(rwA.x  + downX * thick * 0.15, rwA.y  + downY * thick * 0.15);
+  ctx.closePath();
+  ctx.fillStyle = shiftColor(color, -0.38);
+  ctx.fill();
+  // Left flank
+  ctx.beginPath();
+  ctx.moveTo(lwA.x, lwA.y); ctx.lineTo(lwB.x, lwB.y); ctx.lineTo(lTail.x, lTail.y);
+  ctx.lineTo(lTail.x + downX * thick * 0.7, lTail.y + downY * thick * 0.7);
+  ctx.lineTo(lwB.x   + downX * thick * 0.4, lwB.y   + downY * thick * 0.4);
+  ctx.lineTo(lwA.x   + downX * thick * 0.15, lwA.y  + downY * thick * 0.15);
+  ctx.closePath();
+  ctx.fillStyle = shiftColor(color, -0.38);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Top face ──────────────────────────────────────────────────
+  ctx.save();
+  ctx.shadowBlur  = 32;
+  ctx.shadowColor = glow;
+  ctx.beginPath();
+  topFace.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath();
+  // Gradient tip → tail
+  const grad = ctx.createLinearGradient(tip.x, tip.y, (rTail.x + lTail.x) / 2, (rTail.y + lTail.y) / 2);
+  grad.addColorStop(0,   shiftColor(color,  0.28));
+  grad.addColorStop(0.5, color);
+  grad.addColorStop(1,   shiftColor(color, -0.22));
+  ctx.fillStyle   = grad;
   ctx.fill();
   ctx.shadowBlur  = 0;
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-  ctx.lineWidth   = 1.8;
+  ctx.strokeStyle = 'rgba(255,255,255,0.52)';
+  ctx.lineWidth   = 1.5;
   ctx.stroke();
-
   ctx.restore();
+}
+
+// ── U-turn ring for when destination is behind ────────────────────
+function drawUTurnHint(ctx, W, H, ang, color, glow) {
+  const cx  = W * 0.50, cy = H * 0.54;
+  const r   = Math.min(W, H) * 0.10;
+  const dir = ang > 0 ? 1 : -1;
+
+  ctx.save();
+  ctx.shadowBlur  = 18;
+  ctx.shadowColor = glow;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 4.5;
+  ctx.lineCap     = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI * 1.0, Math.PI * 0.0, dir > 0);
+  ctx.stroke();
+  // Arrowhead at the end of the arc
+  const endX = cx + (dir > 0 ? r : -r), endY = cy;
+  ctx.beginPath();
+  ctx.moveTo(endX - dir * 11, endY - 8);
+  ctx.lineTo(endX,             endY);
+  ctx.lineTo(endX - dir * 11, endY + 8);
+  ctx.stroke();
+  ctx.shadowBlur  = 8;
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.font = `bold 14px "Plus Jakarta Sans", system-ui, sans-serif`;
+  ctx.fillStyle   = color;
+  ctx.textAlign   = 'center';
+  ctx.fillText(dir > 0 ? 'Turn Right' : 'Turn Left', cx, cy + r + 22);
+  ctx.restore();
+}
+
+// ── Tiny helpers ──────────────────────────────────────────────────
+function v(x, y) { return { x, y }; }
+
+/** Lighten (amt > 0) or darken (amt < 0) a #RRGGBB hex colour. */
+function shiftColor(hex, amt) {
+  const m = String(hex).match(/^#([0-9a-f]{6})$/i);
+  if (!m) return hex;
+  let r = parseInt(m[1].slice(0, 2), 16);
+  let g = parseInt(m[1].slice(2, 4), 16);
+  let b = parseInt(m[1].slice(4, 6), 16);
+  r = Math.min(255, Math.max(0, Math.round(r + amt * 255)));
+  g = Math.min(255, Math.max(0, Math.round(g + amt * 255)));
+  b = Math.min(255, Math.max(0, Math.round(b + amt * 255)));
+  return `rgb(${r},${g},${b})`;
 }
 
 function updateCompassView() {

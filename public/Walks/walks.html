@@ -81,7 +81,22 @@
         <div class="section-label">Happening Now</div>
         <h2 class="section-title" style="font-size:clamp(24px,3vw,36px);">Active Walks</h2>
       </div>
-      <button class="btn-primary" onclick="openModal()">+ Post a Walk</button>
+      <div class="walks-header">
+  
+  <div class="action-container" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-end;">
+    <button class="btn-primary" onclick="openModal()">+ Post a Walk Manually</button>
+    
+    <button class="btn-ai-magic" onclick="openAIEntry()">
+      <span class="sparkle">✨</span> Generate a Walk with Gemini
+    </button>
+    
+
+    <div id="ai-entry-container" class="ai-hidden-container">
+      <input type="text" id="ai-prompt" class="ai-input" placeholder="e.g. Gore to Smith, 4 people, 3pm...">
+      <button id="ai-magic-btn" class="btn-ai-go" onclick="runAIPlanner()">Go</button>
+    </div>
+  </div>
+</div>
     </div>
 
     <div class="filter-bar">
@@ -120,7 +135,46 @@
     <div id="walk-map-container"></div>
   </div>
 </div>
+<div class="modal-overlay" id="ai-modal-overlay">
+  <div class="modal ai-modal">
+    <div class="modal-header">
+      <div class="header-branding">
+        <div class="ai-badge-icon">✨</div>
+        <h3 class="modal-title"><span class="gemini-text-pretty">Walking</span> Assistant</h3>
+      </div>
+      <button class="modal-close" onclick="closeAIEntry()">✕</button>
+    </div>
 
+    <div class="ai-modal-body">
+      <div class="gemini-badge-top">
+        <span class="ai-sparkle-icon">✨</span>
+        <span class="badge-text">Powered by <span class="gemini-text-pretty">Gemini</span></span>
+      </div>
+
+      <p class="ai-description">Describe your walk in English. I'll handle the rest.</p>
+      
+      <div class="ai-input-wrapper">
+      <textarea id="ai-modal-prompt" class="ai-textarea-modern"
+          placeholder="e.g. Joe, heading from Gore Hall to Smith at 3 PM with 4 people for a study break..."></textarea>
+        
+        <div class="ai-modal-footer">
+          <div class="ai-status" id="ai-status">
+            <div class="ai-status-dot-group">
+              <span class="ai-status-dot"></span>
+              <span class="ai-status-pulse"></span>
+            </div>
+            <span id="ai-status-text" class="ai-assistant-label">Assistant Ready</span>
+          </div>
+          
+          <button id="ai-magic-btn" class="btn-gemini-submit-modern" onclick="runAIPlanner()">
+            <span>Generate & Post</span>
+            <span class="btn-icon"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -175,6 +229,7 @@
       <h3 class="modal-title">Post a Walk 🚶</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
+    
     <form id="walk-form" onsubmit="submitWalk(event)">
       <div class="form-group">
         <label class="form-label">Your Name</label>
@@ -196,6 +251,7 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          
           <label class="form-label">From</label>
           <input type="text" class="form-input" id="f-from" placeholder="e.g. The Green" required>
         </div>
@@ -242,7 +298,9 @@
   </div>
 </div>
 
+
 <div class="toast-container" id="toast-container"></div>
 <script type="module" src="../app.js"></script>
+
 </body>
 </html>

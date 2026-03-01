@@ -1,12 +1,20 @@
-/* walks.js — walks listing, filtering, modal, and join logic for walks.html */
-
-// ---- CONFIG ----
+/* walks.js */
+import { GEMINI_API_KEY } from '../config.js'; 
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// INITIALIZE IMMEDIATELY - This makes 'model' available to the whole file instantly
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// ... rest of your code (LOCATION_ALIASES, mapboxgl.accessToken, etc.)
+// ---- CONFIG ----
 
 let navigationSteps = []; // Store the steps from Mapbox
 let lastSpokenStepIndex = -1; // Track which turn was last announced
 let isARMode = false;
+
+
 
 export const supabase = createClient(
   'https://zsujhugkllbnqidswkgt.supabase.co',
@@ -896,8 +904,109 @@ function addOrMoveMarker(row) {
       .addTo(walkMap);
     participantMarkers.set(row.user_id, marker);
   }
-}
+}async function runAIPlanner() {
+  const promptInput = document.getElementById('ai-modal-prompt');
+  const userPrompt = promptInput.value.trim();
 
+  // --- 1. LOCAL TIME ANCHOR ---
+  const now = new Date();
+  // Force an ISO string that represents exactly your local time
+  const localTimeOffset = now.getTimezoneOffset() * 60000;
+  const localISOTime = new Date(now.getTime() - localTimeOffset).toISOString().slice(0, 16);
+  const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+
+  if (!userPrompt) {
+    alert("Please describe your walk first!");
+    return;
+  }
+
+  // UI Feedback
+  const btn = document.getElementById('ai-magic-btn');
+  const statusText = document.getElementById('ai-status-text');
+  const statusDot = document.querySelector('.ai-status-dot');
+
+  btn.innerHTML = "<span>Planning...</span>";
+  btn.disabled = true;
+  statusText.innerText = "Gemini is thinking...";
+  if (statusDot) statusDot.style.background = "#9b72cb"; 
+
+  try {
+    const campusLandmarks = Object.keys(LOCATION_ALIASES).join(", ");
+    
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: `
+        [REFERENCE CONTEXT]
+        Current Local Time: ${localISOTime}
+        Current Day: ${weekday}
+        Location: Newark, DE (EST)
+
+        [USER REQUEST]
+        "${userPrompt}"
+
+        [LANDMARK LIST]
+        ${campusLandmarks}
+
+        [LOGIC RULES]
+        1. "Today", "Tomorrow", and specific times are relative to the Current Local Time above.
+        2. "2pm" MUST be formatted as "14:00" (24-hour time).
+        3. Return the "datetime" field EXACTLY as "YYYY-MM-DDTHH:mm".
+        4. Use "Brian" if no name is found.
+
+        Return ONLY JSON: 
+        {
+          "from": "Exact Building Name", 
+          "to": "Exact Building Name", 
+          "type": "night|morning|study|exercise|casual", 
+          "name": "Name",
+          "size": 2,
+          "datetime": "YYYY-MM-DDTHH:mm",
+          "notes": "Short summary"
+        }`}]}],
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const aiData = JSON.parse(result.response.text());
+    
+    // --- 2. MAP TO HIDDEN FORM ---
+    document.getElementById('f-from').value = aiData.from || '';
+    document.getElementById('f-to').value = aiData.to || '';
+    document.getElementById('f-name').value = aiData.name || 'Brian';
+    document.getElementById('f-size').value = aiData.size || '2';
+    document.getElementById('f-type').value = aiData.type || 'casual';
+    document.getElementById('f-notes').value = aiData.notes || '';
+    
+    // Inject the generated local time string
+    document.getElementById('f-time').value = aiData.datetime;
+
+    // --- 3. RESOLVE MAP COORDINATES ---
+    fromCoords = await geocodeAddress(LOCATION_ALIASES[aiData.from]?.address || aiData.from);
+    toCoords = await geocodeAddress(LOCATION_ALIASES[aiData.to]?.address || aiData.to);
+
+    if (!fromCoords || !toCoords) {
+        throw new Error("Could not pinpoint buildings.");
+    }
+
+    // --- 4. EXECUTE SUBMISSION ---
+    const fakeEvent = { preventDefault: () => {} };
+    await submitWalk(fakeEvent);
+
+    statusText.innerText = "Walk Posted!";
+    if (statusDot) statusDot.style.background = "#34a853"; 
+    
+    setTimeout(() => {
+      closeAIEntry();
+      promptInput.value = ""; 
+    }, 1500);
+
+  } catch (err) {
+    console.error("Gemini Error:", err);
+    statusText.innerText = "Error parsing request.";
+    if (statusDot) statusDot.style.background = "#d96570";
+  } finally {
+    btn.innerHTML = "<span>Generate & Post</span> <span class='btn-icon'>🚀</span>";
+    btn.disabled = false;
+  }
+}
 async function stopLocationBroadcast() {
   clearInterval(locationInterval);
   locationInterval = null;
@@ -1049,3 +1158,36 @@ window.closeWalkMap = closeWalkMap;
 window.switchMapTheme = switchMapTheme;
 window.toggleMapFullscreen = toggleMapFullscreen;
 window.endWalk = endWalk;
+window.runAIPlanner = runAIPlanner;/* --- ADD TO THE BOTTOM OF walks.js --- */
+
+// 1. Function to open the AI Modal
+function openAIEntry() {
+  const overlay = document.getElementById('ai-modal-overlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    
+    // Focus the textarea for immediate typing
+    setTimeout(() => {
+      document.getElementById('ai-prompt').focus();
+    }, 100);
+  }
+}
+
+// 2. Function to close the AI Modal
+function closeAIEntry() {
+  const overlay = document.getElementById('ai-modal-overlay');
+  if (overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+// 3. ATTACH TO WINDOW (This fixes the 'undefined' errors)
+window.openAIEntry = openAIEntry;
+window.closeAIEntry = closeAIEntry;
+window.runAIPlanner = runAIPlanner;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.joinWalk = joinWalk;
+window.submitWalk = submitWalk;

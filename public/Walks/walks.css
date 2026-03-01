@@ -318,3 +318,324 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
 }
+/* ---- MAGIC AI BUTTON & INPUT ---- */
+.btn-ai-magic {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ai-magic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+  filter: brightness(1.1);
+}
+
+.ai-hidden-container {
+  display: none; /* Toggled via JS */
+  width: 100%;
+  max-width: 350px;
+  gap: 8px;
+  animation: slideDown 0.3s ease out;
+}
+
+/* Custom Properties for Branding */
+:root {
+  --gemini-gradient: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --shadow-luxe: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --text-main: #1f1f1f;
+  --text-muted: #5f6368;
+}
+
+/* Modal Overlay - Full Screen Blur */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal Container */
+.modal.ai-modal {
+  background: var(--glass-bg);
+  width: 100%;
+  max-width: 500px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-luxe);
+  overflow: hidden;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  animation: modalScale 0.3s ease-out;
+}
+
+/* Header & Branding */
+.modal-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-branding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-badge-icon {
+  font-size: 1.2rem;
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.gemini-text-pretty {
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s;
+}
+
+.modal-close:hover { transform: rotate(90deg); }
+
+/* Body & Content */
+.ai-modal-body {
+  padding: 24px;
+}
+
+.gemini-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f0f4f9;
+  border-radius: 100px;
+  margin-bottom: 16px;
+}
+
+.badge-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ai-description {
+  margin-bottom: 20px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Input Area */
+.ai-textarea-modern {
+  width: 100%;
+  height: 120px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: white;
+  resize: none;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.ai-textarea-modern:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.1);
+}
+
+/* Footer & Status */
+.ai-modal-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-status-dot-group {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+
+.ai-status-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: #34a853;
+  border-radius: 50%;
+}
+
+.ai-status-pulse {
+  position: absolute;
+  inset: 0;
+  background: #34a853;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: pulse 2s infinite;
+}
+
+.ai-assistant-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Submit Button */
+.btn-gemini-submit-modern {
+  background: #1f1f1f;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btn-gemini-submit-modern:hover {
+  background: #000;
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes modalScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.4; }
+  70% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}/* Updated Magic Button with Gemini Colors */
+.btn-gemini-submit-modern {
+  background: var(--gemini-gradient); /* Uses the blue-purple-red gradient defined in :root */
+  background-size: 200% auto; /* Allows for a shimmer animation effect */
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 100px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(155, 114, 203, 0.3); /* Subtle purple glow */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gemini-submit-modern:hover {
+  background-position: right center; /* Moves the gradient on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(155, 114, 203, 0.5);
+}
+
+.btn-gemini-submit-modern:active {
+  transform: translateY(0);
+}
+
+/* Optional: Subtle "shimmer" animation for the button icon */
+.btn-icon {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-gemini-submit-modern:hover .btn-icon {
+  transform: translateX(3px) translateY(-2px);
+}
+
+/* Specific text styling inside the button to ensure it pops */
+.btn-gemini-submit-modern span {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Dot & Pulse - Reimagined in Gemini Blue/Violet */
+.ai-status-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  /* Using the signature Blue from the Gemini palette */
+  background: #4285f4; 
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(66, 133, 244, 0.4);
+}
+
+.ai-status-pulse {
+  position: absolute;
+  inset: -2px; /* Slightly larger than the dot for a better halo */
+  background: #9b72cb; /* Soft purple for the outer ring */
+  border-radius: 50%;
+  opacity: 0;
+  animation: geminiPulse 2.5s infinite;
+}
+
+/* A smoother, more "breathing" animation */
+@keyframes geminiPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(2.2);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Subtle text glow for the status label */
+.ai-assistant-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5f6368;
+  letter-spacing: 0.2px;
+}

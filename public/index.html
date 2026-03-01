@@ -25,8 +25,20 @@
     <li><a href="/Auth/auth.html" id="nav-profile-link">Log In</a></li>
     <li><a href="/Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
-  <button class="nav-mobile-btn" onclick="window.location='/Walks/walks.html'">+ Post</button>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobile-menu">
+  <ul class="mobile-menu-links">
+    <li><a href="/" class="nav-active">Home</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/Auth/auth.html" id="mobile-nav-profile-link">Log In</a></li>
+    <li><a href="/Walks/walks.html" class="mobile-nav-cta">+ Post a Walk</a></li>
+  </ul>
+</div>
 
 <!-- HERO -->
 <section class="hero" id="home">
@@ -185,7 +197,6 @@
       <p class="hero-mobile-greeting">Hi [Placeholder Name]! Ready for your walk?</p>
       <div class="hero-mobile-actions" aria-label="Primary actions">
         <a href="/Walks/walks.html" class="hero-mobile-action hero-mobile-action-primary">Find a Walk</a>
-        <a href="/Walks/walks.html" class="hero-mobile-action hero-mobile-action-secondary">Post a Walk</a>
         <a href="/Safety/safety.html" class="hero-mobile-action hero-mobile-action-secondary">Safety Check-In</a>
       </div>
       <p class="hero-subtitle">

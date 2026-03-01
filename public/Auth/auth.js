@@ -5,7 +5,7 @@ import { supabase } from '../supabase.js';
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    window.location.href = '/profile.html';
+    window.location.href = '/Walks/walks.html';
   }
 }
 init();
@@ -77,7 +77,7 @@ async function handleSignUp(e) {
     );
   }
 
-  window.location.href = '/profile.html';
+  window.location.href = '/Walks/walks.html';
 }
 
 // ---- LOG IN ----
@@ -101,7 +101,7 @@ async function handleLogIn(e) {
     return;
   }
 
-  window.location.href = '/profile.html';
+  window.location.href = '/Walks/walks.html';
 }
 
 // ---- SAFE TOAST (may not be available immediately since app.js is parallel module) ----

@@ -27,8 +27,20 @@
     <li><a href="../Profile/profile.html" id="nav-profile-link" class="nav-active">Profile</a></li>
     <li><a href="../Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
-  <button class="nav-mobile-btn" onclick="window.location='/Walks/walks.html'">+ Post</button>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobile-menu">
+  <ul class="mobile-menu-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/Profile/profile.html" id="mobile-nav-profile-link" class="nav-active">Profile</a></li>
+    <li><a href="/Walks/walks.html" class="mobile-nav-cta">+ Post a Walk</a></li>
+  </ul>
+</div>
 
 <!-- PAGE HERO -->
 <div class="page-hero">

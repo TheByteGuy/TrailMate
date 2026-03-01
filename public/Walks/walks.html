@@ -55,8 +55,20 @@
     <li><a href="../Auth/auth.html" id="nav-profile-link">Log In</a></li>
     <li><a href="#" class="nav-cta" onclick="openModal(); return false;">+ Post a Walk</a></li>
   </ul>
-  <button class="nav-mobile-btn" onclick="openModal()">+ Post</button>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobile-menu">
+  <ul class="mobile-menu-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/Walks/walks.html" class="nav-active">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/Auth/auth.html" id="mobile-nav-profile-link">Log In</a></li>
+    <li><a href="#" onclick="closeMobileMenu(); openModal();" class="mobile-nav-cta">+ Post a Walk</a></li>
+  </ul>
+</div>
 
 <!-- PAGE HERO -->
 <div class="page-hero">

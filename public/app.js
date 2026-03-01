@@ -39,15 +39,51 @@ window.showToast = showToast;
 async function updateNavForAuth() {
   const { data: { session } } = await supabase.auth.getSession();
   const link = document.getElementById('nav-profile-link');
-  if (!link) return;
+  const mobileLink = document.getElementById('mobile-nav-profile-link');
   if (session) {
     const { data: profile } = await supabase
       .from('profiles').select('username').eq('id', session.user.id).single();
-    link.textContent = profile ? '@' + profile.username : 'Profile';
-    link.href = '/Profile/profile.html';
+    const text = profile ? '@' + profile.username : 'Profile';
+    const href = '/Profile/profile.html';
+    if (link) { link.textContent = text; link.href = href; }
+    if (mobileLink) { mobileLink.textContent = text; mobileLink.href = href; }
   } else {
-    link.textContent = 'Log In';
-    link.href = '/Auth/auth.html';
+    if (link) { link.textContent = 'Log In'; link.href = '/Auth/auth.html'; }
+    if (mobileLink) { mobileLink.textContent = 'Log In'; mobileLink.href = '/Auth/auth.html'; }
   }
 }
 updateNavForAuth();
+
+// ---- MOBILE MENU ----
+window.closeMobileMenu = function() {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('nav-hamburger');
+  if (menu) menu.classList.remove('open');
+  if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-label', 'Open menu'); }
+  document.body.style.overflow = '';
+};
+
+window.toggleMobileMenu = function() {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('nav-hamburger');
+  if (!menu || !btn) return;
+  const isOpen = menu.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+};
+
+// Close on link click
+document.querySelectorAll('.mobile-menu-links a').forEach(a => {
+  a.addEventListener('click', () => window.closeMobileMenu());
+});
+
+// Close on outside click
+document.addEventListener('click', e => {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('nav-hamburger');
+  if (menu && menu.classList.contains('open') &&
+      !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+    window.closeMobileMenu();
+  }
+});

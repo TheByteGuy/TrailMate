@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About TrailMate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="about.css">
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="../Walks/walks.html">Find Walks</a></li>
+    <li><a href="../Safety/safety.html">Safety</a></li>
+    <li><a href="../Community/community.html">Community</a></li>
+    <li><a href="../Auth/auth.html" id="nav-profile-link">Log In</a></li>
+    <li><a href="../Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
+  </ul>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <ul class="mobile-menu-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/Auth/auth.html" id="mobile-nav-profile-link">Log In</a></li>
+    <li><a href="/Walks/walks.html" class="mobile-nav-cta">+ Post a Walk</a></li>
+  </ul>
+</div>
+
+<div class="page-hero about-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-badge">About TrailMate</div>
+    <h1 class="page-hero-title">About <span class="gold">TrailMate</span></h1>
+    <p class="page-hero-subtitle">
+      TrailMate was built to make late-night walks feel less isolating and more secure. What started as a simple idea
+      for peer-supported walking at the University of Delaware grew into a student-built platform where people can post
+      routes, find trusted company, check in on safety, and build a community that looks out for each other.
+    </p>
+  </div>
+</div>
+
+<section class="about-story">
+  <div class="section-inner">
+    <div class="about-story-grid">
+      <div class="about-story-copy fade-up">
+        <div class="section-label">Why We Built It</div>
+        <h2 class="section-title">Campus safety works better when it feels human.</h2>
+        <p class="about-paragraph">
+          TrailMate is designed for the moments when a walk home should feel routine, not stressful. We wanted a space
+          that feels familiar to students: lightweight, social, and practical enough to use in real time.
+        </p>
+        <p class="about-paragraph">
+          Instead of a rigid system, TrailMate helps people coordinate with each other, share plans clearly, and feel
+          supported by a visible network of students who care about getting home safely together.
+        </p>
+      </div>
+      <div class="about-story-card fade-up">
+        <div class="about-story-kicker">Built around the real student experience</div>
+        <ul class="about-points">
+          <li>Peer-supported walks without unnecessary friction</li>
+          <li>Quick access to route details, safety tools, and community trust</li>
+          <li>A student-first design language that feels welcoming instead of clinical</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about-team" id="team">
+  <div class="section-inner">
+    <div class="how-header">
+      <div>
+        <div class="section-label">Meet The Team</div>
+        <h2 class="section-title">Say hi to our team!</h2>
+      </div>
+      <p class="section-subtitle">The developers behind TrailMate, with the details you can swap for the final links and contact info.</p>
+    </div>
+    <div class="team-grid">
+      <article class="team-card fade-up" style="transition-delay:0.08s;">
+        <img class="team-photo" src="../assets/dathan.jpeg" alt="Portrait of Dathan Lang">
+        <div class="team-card-body">
+          <h3 class="team-name">Dathan Lang</h3>
+          <p class="team-username">@dathanlang</p>
+          <a class="team-link" href="#" aria-label="LinkedIn placeholder for Dathan Lang">Dathan's LinkedIn</a>
+          <a class="team-link" href="mailto:add-dathan-email@example.com">add-dathan-email@example.com</a>
+        </div>
+      </article>
+      <article class="team-card fade-up" style="transition-delay:0.16s;">
+        <img class="team-photo" src="../assets/brian.jpeg" alt="Portrait of Brian Tam">
+        <div class="team-card-body">
+          <h3 class="team-name">Brian Tam</h3>
+          <p class="team-username">@briantam</p>
+          <a class="team-link" href="https://www.linkedin.com/in/brian-tam1/" aria-label="LinkedIn">Brian's LinkedIn</a>
+          <a class="team-link" href="mailto:briantam100@gmail.com">briantam100@gmail.com</a>
+        </div>
+      </article>
+      <article class="team-card fade-up">
+        <img class="team-photo" src="../assets/keira.jpeg" alt="Portrait of Keira Ang">
+        <div class="team-card-body">
+          <h3 class="team-name">Keira Ang</h3>
+          <p class="team-username">@angk2</p>
+          <a class="team-link" href="https://www.linkedin.com/in/keira-ang/" aria-label="LinkedIn">Keira's LinkedIn</a>
+          <a class="team-link" href="mailto:keira.nerys.ang@gmail.com">keira.nerys.ang@gmail.com</a>
+        </div>
+      </article>
+      <article class="team-card fade-up" style="transition-delay:0.24s;">
+        <img class="team-photo team-photo-top" src="../assets/alex.webp" alt="Portrait of Alex">
+        <div class="team-card-body">
+          <h3 class="team-name">Alex</h3>
+          <p class="team-username">@alex</p>
+          <a class="team-link" href="https://www.linkedin.com/in/alexander-cavoli-845b96358/" aria-label="Alex's LinkedIn">LinkedIn placeholder</a>
+          <a class="team-link" href="mailto:cavola@rpi.edu">cavola@rpi.edu</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="nav-logo" style="margin-bottom:16px;display:flex;">
+          <div class="nav-logo-icon">🥾</div>
+          <span class="nav-logo-text" style="color:white;margin-left:10px;">TrailMate</span>
+        </a>
+        <p class="footer-brand-desc">A student-built platform for safe, peer-supported walks across the University of Delaware campus and beyond.</p>
+        <div class="footer-ud-badge">🏛️ University of Delaware Community</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-col-links">
+          <li><a href="/Walks/walks.html">Find a Walk</a></li>
+          <li><a href="/Walks/walks.html">Post a Walk</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/Safety/safety.html">Safety Features</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Safety</div>
+        <ul class="footer-col-links">
+          <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
+          <li><a href="/Safety/safety.html">Safety Guidelines</a></li>
+          <li><a href="/Safety/safety.html#report">Report Concern</a></li>
+          <li><a href="/Community/community.html">Community Standards</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">About</div>
+        <ul class="footer-col-links">
+          <li><a href="/About/about.html">About TrailMate</a></li>
+          <li><a href="/About/about.html#team">Say Hi To The Team</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
+      <span>University of Delaware, Newark, DE 19716</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="../app.js"></script>
+</body>
+</html>

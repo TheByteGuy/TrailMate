@@ -1,3 +1,2 @@
 export const SUPABASE_URL = 'https://zsujhugkllbnqidswkgt.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM';
-export const GEMINI_API_KEY = 'AIzaSyBPwbQao0eywUbxgoAX93nedJTDKQ2cPy4';

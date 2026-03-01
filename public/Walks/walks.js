@@ -1,11 +1,3 @@
-/* walks.js */
-import { GEMINI_API_KEY } from '../config.js'; 
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-// INITIALIZE IMMEDIATELY - This makes 'model' available to the whole file instantly
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // ... rest of your code (LOCATION_ALIASES, mapboxgl.accessToken, etc.)
 // ---- CONFIG ----
@@ -908,9 +900,7 @@ function addOrMoveMarker(row) {
   const promptInput = document.getElementById('ai-modal-prompt');
   const userPrompt = promptInput.value.trim();
 
-  // --- 1. LOCAL TIME ANCHOR ---
   const now = new Date();
-  // Force an ISO string that represents exactly your local time
   const localTimeOffset = now.getTimezoneOffset() * 60000;
   const localISOTime = new Date(now.getTime() - localTimeOffset).toISOString().slice(0, 16);
   const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -920,7 +910,6 @@ function addOrMoveMarker(row) {
     return;
   }
 
-  // UI Feedback
   const btn = document.getElementById('ai-magic-btn');
   const statusText = document.getElementById('ai-status-text');
   const statusDot = document.querySelector('.ai-status-dot');
@@ -933,39 +922,22 @@ function addOrMoveMarker(row) {
   try {
     const campusLandmarks = Object.keys(LOCATION_ALIASES).join(", ");
     
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: `
-        [REFERENCE CONTEXT]
-        Current Local Time: ${localISOTime}
-        Current Day: ${weekday}
-        Location: Newark, DE (EST)
-
-        [USER REQUEST]
-        "${userPrompt}"
-
-        [LANDMARK LIST]
-        ${campusLandmarks}
-
-        [LOGIC RULES]
-        1. "Today", "Tomorrow", and specific times are relative to the Current Local Time above.
-        2. "2pm" MUST be formatted as "14:00" (24-hour time).
-        3. Return the "datetime" field EXACTLY as "YYYY-MM-DDTHH:mm".
-        4. Use "Brian" if no name is found.
-
-        Return ONLY JSON: 
-        {
-          "from": "Exact Building Name", 
-          "to": "Exact Building Name", 
-          "type": "night|morning|study|exercise|casual", 
-          "name": "Name",
-          "size": 2,
-          "datetime": "YYYY-MM-DDTHH:mm",
-          "notes": "Short summary"
-        }`}]}],
-      generationConfig: { responseMimeType: "application/json" }
+    // FETCH FROM YOUR NEW VERCEL API ROUTE
+    const response = await fetch('/api/plan-walk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userPrompt,
+        localISOTime,
+        weekday,
+        campusLandmarks
+      })
     });
 
-    const aiData = JSON.parse(result.response.text());
+    if (!response.ok) throw new Error("Server Error");
+    
+    // Get the parsed data back from your serverless function
+    const aiData = await response.json();
     
     // --- 2. MAP TO HIDDEN FORM ---
     document.getElementById('f-from').value = aiData.from || '';
@@ -974,8 +946,6 @@ function addOrMoveMarker(row) {
     document.getElementById('f-size').value = aiData.size || '2';
     document.getElementById('f-type').value = aiData.type || 'casual';
     document.getElementById('f-notes').value = aiData.notes || '';
-    
-    // Inject the generated local time string
     document.getElementById('f-time').value = aiData.datetime;
 
     // --- 3. RESOLVE MAP COORDINATES ---
@@ -999,7 +969,7 @@ function addOrMoveMarker(row) {
     }, 1500);
 
   } catch (err) {
-    console.error("Gemini Error:", err);
+    console.error("API Error:", err);
     statusText.innerText = "Error parsing request.";
     if (statusDot) statusDot.style.background = "#d96570";
   } finally {

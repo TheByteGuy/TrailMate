@@ -7,6 +7,7 @@ let lastSpokenStepIndex = -1; // Track which turn was last announced
 let isARMode = false;
 
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 export const supabase = createClient(
   'https://zsujhugkllbnqidswkgt.supabase.co',
@@ -1153,11 +1154,16 @@ function closeAIEntry() {
   }
 }
 
-// 3. ATTACH TO WINDOW (This fixes the 'undefined' errors)
+// Attach everything used in HTML to the window object
+window.openModal = openModal;
+window.closeModal = closeModal;
 window.openAIEntry = openAIEntry;
 window.closeAIEntry = closeAIEntry;
 window.runAIPlanner = runAIPlanner;
-window.openModal = openModal;
-window.closeModal = closeModal;
 window.joinWalk = joinWalk;
 window.submitWalk = submitWalk;
+window.endWalk = endWalk;
+window.openWalkMap = openWalkMap;
+window.closeWalkMap = closeWalkMap;
+window.switchMapTheme = switchMapTheme;
+window.toggleMapFullscreen = toggleMapFullscreen;

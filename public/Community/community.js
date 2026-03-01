@@ -1,7 +1,7 @@
 /* community.js */
 
 let leaderboardData = [];
-let currentSort = 'steps';
+let currentSort = 'walks';
 
 // ---- Animated counters ----
 function animateCounters() {
@@ -31,6 +31,26 @@ function animateCounters() {
   });
 }
 
+function assignBadges(user) {
+  const badges = [];
+
+  // Example rules
+  if (user.walks >= 25) badges.push('Trail Guide');
+  if (user.walks >= 10 && user.walks < 25) badges.push('10 Walks');
+  if (user.walks >= 100) badges.push('100 Walks');
+
+  if (user.steps >= 50000) badges.push('Campus Explorer');
+  if (user.miles >= 50) badges.push('Marathon Walker');
+
+  // If you track walk times, can assign Night Owl / Early Bird
+  if (user.walksAfter9PM >= 10) badges.push('Night Owl');
+  if (user.walksBefore8AM >= 10) badges.push('Early Bird');
+
+  // Assign to user object
+  user.badges = badges;
+  user.badge = badges[0] || '';
+}
+
 // ---- Load stats from API ----
 async function loadStats() {
   try {
@@ -39,6 +59,8 @@ async function loadStats() {
     const cards = document.querySelectorAll('.comm-stat-number[data-target]');
     if (cards[0]) cards[0].dataset.target = data.activeStudents;
     if (cards[1]) cards[1].dataset.target = data.walksCompleted;
+    const totalWalks = leaderboardData.reduce((sum, u) => sum + (u.walks || 0), 0);
+    cards[2].dataset.target = totalWalks;
   } catch (e) { /* use defaults */ }
   animateCounters();
 }
@@ -48,10 +70,20 @@ async function loadLeaderboard() {
   try {
     const res = await fetch('/api/leaderboard');
     leaderboardData = await res.json();
+
+    leaderboardData.forEach(assignBadges);
   } catch (e) {
     leaderboardData = [];
   }
   renderLeaderboard();
+
+  // Update walks counter after leaderboard is loaded
+  const cards = document.querySelectorAll('.comm-stat-number[data-target]');
+  if (cards[2]) {
+    const totalWalks = leaderboardData.reduce((sum, u) => sum + (u.walks || 0), 0);
+    cards[2].dataset.target = totalWalks;
+  }
+  animateCounters();
 }
 
 function sortData(data, key) {

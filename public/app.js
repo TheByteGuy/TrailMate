@@ -40,16 +40,28 @@ async function updateNavForAuth() {
   const { data: { session } } = await supabase.auth.getSession();
   const link = document.getElementById('nav-profile-link');
   const mobileLink = document.getElementById('mobile-nav-profile-link');
+  const heroGreeting = document.getElementById('hero-mobile-greeting');
   if (session) {
     const { data: profile } = await supabase
       .from('profiles').select('username').eq('id', session.user.id).single();
-    const text = profile ? '@' + profile.username : 'Profile';
+    const username = profile?.username
+      || session.user.user_metadata?.username
+      || session.user.email?.split('@')[0];
+    const text = username ? '@' + username : 'Profile';
     const href = '/Profile/profile.html';
     if (link) { link.textContent = text; link.href = href; }
     if (mobileLink) { mobileLink.textContent = text; mobileLink.href = href; }
+    if (heroGreeting) {
+      heroGreeting.textContent = username
+        ? `Hi ${username}! Ready for your walk?`
+        : 'Hi there! Ready for your walk?';
+    }
   } else {
     if (link) { link.textContent = 'Log In'; link.href = '/Auth/auth.html'; }
     if (mobileLink) { mobileLink.textContent = 'Log In'; mobileLink.href = '/Auth/auth.html'; }
+    if (heroGreeting) {
+      heroGreeting.textContent = 'Hi there! Ready for your walk?';
+    }
   }
 }
 updateNavForAuth();

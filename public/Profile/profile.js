@@ -1,5 +1,5 @@
 /* profile.js — Profile page: view, edit bio, follow/unfollow, search, network */
-import { supabase } from './supabase.js';
+import { supabase } from '../supabase.js';
 
 // ---- STATE ----
 let currentSession = null;

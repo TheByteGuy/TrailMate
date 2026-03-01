@@ -1,5 +1,5 @@
 /* auth.js — login / signup logic for auth.html */
-import { supabase } from './supabase.js';
+import { supabase } from '../supabase.js';
 
 // ---- INIT ----
 async function init() {

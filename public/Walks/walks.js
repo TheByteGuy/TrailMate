@@ -8,6 +8,38 @@ export const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
 );
 
+const LOCATION_ALIASES = {
+  "Gore Hall": {
+    address: "Gore Hall, 114 The Green, Newark, DE 19716",
+  },
+  "Kirkbride Hall": {
+    address: "Kirkbride Lecture Hall, 114 S College Ave, Newark, DE 19716",
+  },
+  "Smith Hall": {
+    address: "Smith Hall, 18 Amstel Ave, Newark, DE 19716",
+  },
+  "Du Pont Hall": {
+    address: "127 The Green, Newark, DE 19716",
+  },
+  "Spencer Laboratory": {
+    address: "Spencer Laboratory, 130 Academy St, Newark, DE 19716",
+  },
+  "Memorial Hall": {
+    address: "170 The Green, Newark, DE 19716",
+  },
+  "Caesar Rodney Dining Hall": {
+    address: "350 Academy St, Newark, DE 19716",
+  },
+  "Perkins Student Center": {
+    address: "325 Academy St, Newark, DE 19716",
+  },
+  "Morris Library": {
+    address: "181 S College Ave, Newark, DE 19717",
+  }
+  
+  // Add more campus favorites here
+};
+
 mapboxgl.accessToken = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
 
 // ---- LOCATION ----
@@ -274,78 +306,111 @@ async function loadUserMemberships() {
     .eq('user_id', session.user.id);
   if (data) data.forEach(m => joinedWalks.add(m.walk_id));
 }
-
-// ---- LOCATION AUTOCOMPLETE ----
 function setupAutocomplete(inputId, onSelect) {
   const input = document.getElementById(inputId);
   let debounce;
 
-  function removeDropdown() {
+  const removeDropdown = () => {
     input.parentElement.querySelector('.location-suggestions')?.remove();
-  }
+  };
 
-  input.addEventListener('input', () => {
-    onSelect(null); // clear stored coords whenever user edits manually
-    clearTimeout(debounce);
+  input.addEventListener('input', async () => {
     const q = input.value.trim();
+    
+    // 1. IMMEDIATE EXACT MATCH CHECK
+    // If they typed the full nickname, resolve it immediately without waiting for the API
+    const exactMatchKey = Object.keys(LOCATION_ALIASES).find(
+      key => key.toLowerCase() === q.toLowerCase()
+    );
+
+    if (exactMatchKey) {
+      const data = LOCATION_ALIASES[exactMatchKey];
+      onSelect(null); // Reset while fetching
+      const coords = await geocodeAddress(data.address);
+      onSelect(coords);
+      // We don't return here so the dropdown can still show the "Success" state or other options
+    } else {
+      onSelect(null); 
+    }
+
+    // 2. DEBOUNCED SUGGESTIONS (Fallback & Starred)
+    clearTimeout(debounce);
     if (q.length < 2) { removeDropdown(); return; }
 
     debounce = setTimeout(async () => {
+      let mapboxFeatures = [];
       try {
-        // ~30 miles in degrees at ~39°N (Delaware area)
         const D_LAT = 0.435;
         const D_LNG = 0.566;
-
         let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
-          `?access_token=${mapboxgl.accessToken}&limit=5&types=address,poi,place,neighborhood`;
-
-        if (userLocation) {
-          const { lat, lng } = userLocation;
-          url += `&proximity=${lng},${lat}`;
-          url += `&bbox=${lng - D_LNG},${lat - D_LAT},${lng + D_LNG},${lat + D_LAT}`;
-        }
+                  `?access_token=${mapboxgl.accessToken}&limit=5&proximity=${userLocation?.lng || 0},${userLocation?.lat || 0}`;
 
         const res = await fetch(url);
         const data = await res.json();
-        renderDropdown(data.features || []);
-      } catch {
-        removeDropdown();
-      }
+        mapboxFeatures = data.features || [];
+      } catch (e) { console.error(e); }
+
+      renderDropdown(mapboxFeatures, q);
     }, 300);
   });
 
-  function renderDropdown(features) {
+  function renderDropdown(features, query) {
     removeDropdown();
-    if (!features.length) return;
-
     const ul = document.createElement('ul');
     ul.className = 'location-suggestions';
+    const lowerQ = query.toLowerCase();
 
+    // A. Show Starred Aliases that START with or CONTAIN the query
+    Object.keys(LOCATION_ALIASES).forEach(name => {
+      if (name.toLowerCase().includes(lowerQ)) {
+        const li = document.createElement('li');
+        li.className = 'location-suggestion-item starred-item';
+        li.innerHTML = `<span class="sugg-main">⭐ ${name}</span><span class="sugg-sub">Campus Building</span>`;
+        
+        li.addEventListener('mousedown', async (e) => {
+          e.preventDefault();
+          const alias = LOCATION_ALIASES[name];
+          input.value = alias.address;
+          const coords = await geocodeAddress(alias.address);
+          onSelect(coords);
+          removeDropdown();
+        });
+        ul.appendChild(li);
+      }
+    });
+
+    // B. Fallback to Mapbox Results
     features.forEach(f => {
       const li = document.createElement('li');
       li.className = 'location-suggestion-item';
       const main = f.text || f.place_name.split(',')[0];
-      const sub  = f.place_name.replace(f.text + ', ', '');
-      li.innerHTML =
-        `<span class="sugg-main">${main}</span>` +
-        `<span class="sugg-sub">${sub}</span>`;
+      const sub = f.place_name.replace(f.text + ', ', '');
+      li.innerHTML = `<span class="sugg-main">${main}</span><span class="sugg-sub">${sub}</span>`;
 
       li.addEventListener('mousedown', e => {
-        e.preventDefault(); // keep input focused
+        e.preventDefault();
         input.value = f.place_name;
         onSelect({ lat: f.center[1], lng: f.center[0] });
         removeDropdown();
       });
-
       ul.appendChild(li);
     });
 
-    input.parentElement.appendChild(ul);
+    if (ul.children.length > 0) input.parentElement.appendChild(ul);
   }
 
   input.addEventListener('blur', () => setTimeout(removeDropdown, 200));
 }
 
+// Utility for the "Behind the Scenes" geocoding
+async function geocodeAddress(address) {
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.features?.length) return null;
+  const f = data.features[0];
+  return { lat: f.center[1], lng: f.center[0] };
+}
 // ---- SUBMIT WALK ----
 async function submitWalk(e) {
   e.preventDefault();

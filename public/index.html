@@ -229,30 +229,7 @@
             Live
           </div>
         </div>
-        <div class="pseudo-map">
-          <div class="map-grid"></div>
-          <div class="map-path" style="width:120px;height:3px;top:45%;left:20%;transform:rotate(-5deg);"></div>
-          <div class="map-path" style="width:80px;height:3px;top:60%;left:45%;transform:rotate(15deg);"></div>
-          <div class="map-path" style="width:60px;height:3px;top:35%;left:55%;transform:rotate(-25deg);"></div>
-          <div class="map-location" style="top:30%;left:20%;">
-            <div class="map-pin"></div>
-            <div class="map-label">The Green</div>
-          </div>
-          <div class="map-location" style="top:55%;left:55%;">
-            <div class="map-pin"></div>
-            <div class="map-label">Trabant</div>
-          </div>
-          <div class="map-location" style="top:25%;left:70%;">
-            <div class="map-pin"></div>
-            <div class="map-label">Gore Hall</div>
-          </div>
-          <div class="map-location" style="top:70%;left:30%;">
-            <div class="map-pin"></div>
-            <div class="map-label">Perkins</div>
-          </div>
-          <div class="map-walker map-walker-1"></div>
-          <div class="map-walker map-walker-2"></div>
-        </div>
+        <div id="hero-map" style="width:100%;height:280px;border-radius:16px;margin-bottom:10px;"></div>
         <div class="active-walkers">
           <div class="walker-row">
             <div class="walker-row-left">
@@ -412,6 +389,137 @@
 </footer>
 
 <div class="toast-container" id="toast-container"></div>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabase = createClient(
+  'https://zsujhugkllbnqidswkgt.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
+);
+
+mapboxgl.accessToken = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
+
+loadHeroWalk();
+
+async function loadHeroWalk() {
+  const { data: walk } = await supabase
+    .from('walks')
+    .select('*')
+    .order('isotime', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (!walk) return;
+
+  const map = new mapboxgl.Map({
+    container: 'hero-map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [walk.fromlng, walk.fromlat],
+    zoom: 16,
+    pitch: 60,      // angled but natural
+    bearing: -30,   // slight rotation
+    antialias: true
+  });
+
+  map.on('load', async () => {
+    const res = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${walk.fromlng},${walk.fromlat};${walk.tolng},${walk.tolat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+    );
+    // Add 3D buildings
+    const layers = map.getStyle().layers;
+
+    const labelLayerId = layers.find(
+      layer => layer.type === 'symbol' && layer.layout['text-field']
+    ).id;
+
+    map.addLayer(
+      {
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#aaa',
+          'fill-extrusion-height': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            15,
+            0,
+            16,
+            ['get', 'height']
+          ],
+          'fill-extrusion-base': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            15,
+            0,
+            16,
+            ['get', 'min_height']
+          ],
+          'fill-extrusion-opacity': 0.6
+        }
+      },
+      labelLayerId
+    );
+    const data = await res.json();
+    const route = data.routes[0].geometry;
+
+    map.addSource('route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: route
+      }
+    });
+
+    map.addLayer({
+      id: 'route-line',
+      type: 'line',
+      source: 'route',
+      paint: {
+        'line-color': '#FFD200',
+        'line-width': 5
+      }
+    });
+
+    // Smooth rotation animation
+    let bearing = -20;
+    setInterval(() => {
+      bearing += 0.1;
+      map.rotateTo(bearing, { duration: 0 });
+    }, 50);
+
+    const bounds = route.coordinates.reduce(
+      (b, coord) => b.extend(coord),
+      new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0])
+    );
+
+    new mapboxgl.Marker({ color: '#2ecc71' })
+    .setLngLat([walk.fromlng, walk.fromlat])
+    .setPopup(new mapboxgl.Popup().setText("Start"))
+    .addTo(map);
+
+    // END marker
+    new mapboxgl.Marker({ color: '#e74c3c' })
+      .setLngLat([walk.tolng, walk.tolat])
+      .setPopup(new mapboxgl.Popup().setText("End"))
+      .addTo(map);
+      map.fitBounds(bounds, {
+        padding: 80,
+        pitch: 60,      // keep angle
+        bearing: -30,   // keep rotation
+        duration: 2000
+      });
+  });
+}
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

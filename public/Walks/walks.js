@@ -171,6 +171,13 @@ const WALK_TYPE_STYLES = {
   casual:   { label: '😊 Casual',        class: 'badge-casual' }
 };
 
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function buildCardHTML(walk) {
   // 1. Safe fallbacks for Supabase case-insensitivity
   const max = walk.maxSpots ?? walk.maxspots ?? 1;
@@ -191,7 +198,9 @@ function buildCardHTML(walk) {
     <div class="walk-card" id="walk-${walk.id}">
       <div class="walk-card-top">
         <div class="walk-user">
-          <div class="avatar ${walk.avatarClass || ''}">${walk.initials || '?'}</div>
+        <div class="avatar ${walk.avatarClass || ''}">
+          ${walk.initials || getInitials(walk.name)}
+        </div>
           <div><div class="walk-user-name">${walk.name}</div><div class="walk-user-year">${walk.year} · UD Verified ✓</div></div>
         </div>
         ${(() => {

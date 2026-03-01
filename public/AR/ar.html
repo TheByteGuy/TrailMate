@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AR Wayfinding — TrailMate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="ar.css">
+</head>
+<body class="ar-page">
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🥾</div>
+    <span class="nav-logo-text">TrailMate</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="../Walks/walks.html">Find Walks</a></li>
+    <li><a href="../Safety/safety.html">Safety</a></li>
+    <li><a href="../Community/community.html">Community</a></li>
+    <li><a href="ar.html" class="nav-active">AR Navigate</a></li>
+    <li><a href="../Auth/auth.html" id="nav-profile-link">Log In</a></li>
+    <li><a href="../Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
+  </ul>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <ul class="mobile-menu-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
+    <li><a href="/AR/ar.html" class="nav-active">AR Navigate</a></li>
+    <li><a href="/Auth/auth.html" id="mobile-nav-profile-link">Log In</a></li>
+    <li><a href="/Walks/walks.html" class="mobile-nav-cta">+ Post a Walk</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1 — ROUTE LIST
+══════════════════════════════════════════════ -->
+<div id="screen-list" class="ar-screen is-active">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="page-hero-badge">📡 AR Wayfinding Beta</div>
+      <h1 class="page-hero-title">Hands-Free <span class="gold">AR Navigation</span></h1>
+      <p class="page-hero-subtitle">Obstacle-aware, accessibility-rated campus routes with optional AR wayfinding — follow directions without ever looking down at a map.</p>
+      <div class="hero-capabilities">
+        <span class="cap-chip">♿ Wheelchair info</span>
+        <span class="cap-chip">⚠️ Obstacle alerts</span>
+        <span class="cap-chip">🔊 Voice guidance</span>
+        <span class="cap-chip">📷 Live AR overlay</span>
+      </div>
+    </div>
+  </div>
+
+  <section style="padding: 60px 40px 80px;">
+    <div class="section-inner">
+
+      <div class="list-header">
+        <div>
+          <div class="section-label">Campus Routes</div>
+          <h2 class="section-title" style="margin-bottom:8px;">Choose Your Route</h2>
+          <p style="color:var(--gray-400);font-size:15px;">Tap a route to see full accessibility details, then launch AR navigation.</p>
+        </div>
+        <div class="gps-status-card" id="gps-status-card">
+          <span class="gps-pulse" id="gps-pulse"></span>
+          <span id="gps-status-text">Acquiring GPS…</span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-row" id="filter-row">
+        <button class="ar-chip is-active" data-filter="all">All Routes</button>
+        <button class="ar-chip" data-filter="wheelchair">♿ Wheelchair</button>
+        <button class="ar-chip" data-filter="night">🌙 Night-Safe</button>
+        <button class="ar-chip" data-filter="quick">⚡ Under 10 min</button>
+        <button class="ar-chip" data-filter="clear">✅ No Obstacles</button>
+      </div>
+
+      <!-- Route grid -->
+      <div class="route-grid" id="route-grid"></div>
+
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2 — ROUTE DETAIL
+══════════════════════════════════════════════ -->
+<div id="screen-detail" class="ar-screen">
+
+  <div class="detail-topbar">
+    <button class="detail-back-btn" id="detail-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Routes
+    </button>
+  </div>
+
+  <div class="detail-scroll">
+    <div id="detail-content"></div>
+  </div>
+
+  <div class="detail-action-bar">
+    <button class="btn-primary detail-btn-ar" id="btn-start-ar">
+      <span>📷</span> Start AR Navigation
+    </button>
+    <button class="btn-detail-text" id="btn-start-text">
+      🗺️ Text Mode
+    </button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3 — ACTIVE NAVIGATION
+══════════════════════════════════════════════ -->
+<div id="screen-navigate" class="ar-screen ar-fullscreen">
+
+  <!-- Camera feed (AR mode) -->
+  <video id="ar-video" autoplay playsinline muted></video>
+
+  <!-- AR canvas overlay -->
+  <canvas id="ar-canvas"></canvas>
+
+  <!-- Compass fallback (no camera / text mode) -->
+  <div id="compass-bg" class="compass-bg" style="display:none;">
+    <div class="compass-wrap">
+      <div class="compass-ring" id="compass-ring">
+        <div class="compass-needle-wrap" id="compass-needle-wrap">
+          <div class="compass-needle-north"></div>
+          <div class="compass-needle-south"></div>
+        </div>
+        <span class="compass-card c-n">N</span>
+        <span class="compass-card c-e">E</span>
+        <span class="compass-card c-s">S</span>
+        <span class="compass-card c-w">W</span>
+      </div>
+      <div class="compass-label" id="compass-label">— m</div>
+      <div class="compass-bearing-label" id="compass-bearing-label"></div>
+    </div>
+  </div>
+
+  <!-- ── TOP INSTRUCTION BANNER ── -->
+  <div class="nav-top">
+    <div class="instr-card" id="instr-card">
+      <div class="instr-icon" id="instr-icon">🚶</div>
+      <div class="instr-body">
+        <div class="instr-primary" id="instr-primary">Starting navigation…</div>
+        <div class="instr-secondary" id="instr-secondary"></div>
+      </div>
+    </div>
+    <div class="gps-badge" id="gps-badge">
+      <span class="gps-dot-sm" id="nav-gps-dot"></span>
+      GPS
+    </div>
+  </div>
+
+  <!-- ── BOTTOM CONTROLS ── -->
+  <div class="nav-bottom">
+    <div class="wp-dots" id="wp-dots"></div>
+    <div class="nav-ctrl-row">
+      <button class="nav-btn" id="btn-voice" title="Toggle voice guidance" onclick="arApp.toggleVoice()">🔊</button>
+      <button class="nav-btn nav-btn-exit" id="btn-exit" onclick="arApp.exitNavigation()">✕ Exit</button>
+      <button class="nav-btn" id="btn-cam" title="Toggle camera" onclick="arApp.toggleCamera()">📷</button>
+    </div>
+  </div>
+
+  <!-- ── OBSTACLE WARNING ── -->
+  <div class="obstacle-banner" id="obstacle-banner" style="display:none">
+    <span id="obstacle-icon">⚠️</span>
+    <span id="obstacle-text">Obstacle ahead</span>
+  </div>
+
+  <!-- ── ARRIVAL OVERLAY ── -->
+  <div class="arrival-overlay" id="arrival-overlay" style="display:none">
+    <div class="arrival-card">
+      <div class="arrival-emoji">🎉</div>
+      <h2 class="arrival-title">Route Complete!</h2>
+      <p class="arrival-sub" id="arrival-sub"></p>
+      <div class="arrival-stats" id="arrival-stats"></div>
+      <button class="btn-primary" id="btn-done" onclick="arApp.exitNavigation()">Done</button>
+    </div>
+  </div>
+
+  <!-- ── PERMISSION PROMPT ── -->
+  <div class="perm-overlay" id="perm-overlay" style="display:none">
+    <div class="perm-card">
+      <div class="perm-icon">🧭</div>
+      <h3>Enable Compass</h3>
+      <p>iOS requires permission to access the device compass for AR navigation.</p>
+      <button class="btn-primary" id="btn-perm" onclick="arApp.requestOrientationPermission()">Allow Compass Access</button>
+      <button class="btn-skip-perm" onclick="arApp.skipPermission()">Skip (use text directions)</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px;"></div>
+
+<script type="module" src="../app.js"></script>
+<script src="ar.js"></script>
+</body>
+</html>

@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="ar.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 </head>
 <body class="ar-page">
 
@@ -166,11 +168,15 @@
 
   <!-- ── BOTTOM CONTROLS ── -->
   <div class="nav-bottom">
+    <div class="nav-tab-bar" id="nav-tab-bar">
+      <span class="nav-tab-pill is-active" id="tab-dot-ar">AR</span>
+      <span class="nav-tab-pill" id="tab-dot-map">MAP</span>
+    </div>
     <div class="wp-dots" id="wp-dots"></div>
     <div class="nav-ctrl-row">
       <button class="nav-btn" id="btn-voice" title="Toggle voice guidance" onclick="arApp.toggleVoice()">🔊</button>
       <button class="nav-btn nav-btn-exit" id="btn-exit" onclick="arApp.exitNavigation()">✕ Exit</button>
-      <button class="nav-btn" id="btn-cam" title="Toggle camera" onclick="arApp.toggleCamera()">📷</button>
+      <button class="nav-btn nav-btn-tab" id="btn-tab-next" title="Switch view" onclick="arApp.cycleNavTab()">›</button>
     </div>
   </div>
 
@@ -202,6 +208,25 @@
     </div>
   </div>
 
+</div>
+
+<!-- MAP MODAL — pops up as a distinct overlay on top of everything -->
+<div id="map-modal-overlay" class="map-modal-overlay">
+  <div class="map-modal">
+    <div class="map-modal-header">
+      <h3 class="map-modal-title">🗺️ Route Map</h3>
+      <div class="map-modal-actions">
+        <button class="map-modal-fit-btn" id="btn-fit-route" onclick="arApp.fitNavMapToRoute()">Fit Route</button>
+        <button class="map-modal-close" id="btn-close-map" onclick="arApp.closeMapModal()">✕</button>
+      </div>
+    </div>
+    <div class="map-modal-body" id="nav-map-tab"></div>
+    <div class="map-modal-legend">
+      <span class="legend-item"><span class="legend-dot legend-done"></span> Completed</span>
+      <span class="legend-item"><span class="legend-dot legend-current"></span> Current</span>
+      <span class="legend-item"><span class="legend-dot legend-pending"></span> Upcoming</span>
+    </div>
+  </div>
 </div>
 
 <!-- Toast container -->

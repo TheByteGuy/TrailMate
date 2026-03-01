@@ -47,9 +47,157 @@
 <div class="page-hero">
   <div class="page-hero-inner">
     <h1 class="page-hero-title">The TrailMate <span class="gold">Community</span></h1>
-    <p class="page-hero-subtitle">Connect with fellow students and walk safer together.</p>
+    <p class="page-hero-subtitle">See who's leading the pack, earn badges, and climb the leaderboard.</p>
   </div>
 </div>
+
+<!-- STATS BANNER -->
+<section class="comm-stats-section">
+  <div class="section-inner">
+    <div class="comm-stats-grid" id="stats-grid">
+      <div class="comm-stat-card">
+        <span class="comm-stat-icon">👥</span>
+        <span class="comm-stat-number" data-target="342">0</span>
+        <span class="comm-stat-label">Active Walkers</span>
+      </div>
+      <div class="comm-stat-card">
+        <span class="comm-stat-icon">🚶</span>
+        <span class="comm-stat-number" data-target="1247">0</span>
+        <span class="comm-stat-label">Walks Completed</span>
+      </div>
+      <div class="comm-stat-card">
+        <span class="comm-stat-icon">👟</span>
+        <span class="comm-stat-number" data-target="1545400" data-format="steps">0</span>
+        <span class="comm-stat-label">Total Steps</span>
+      </div>
+      <div class="comm-stat-card">
+        <span class="comm-stat-icon">🛤️</span>
+        <span class="comm-stat-number" data-target="698" data-suffix=" mi">0</span>
+        <span class="comm-stat-label">Miles Walked</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="comm-leaderboard-section">
+  <div class="section-inner">
+    <div class="comm-leaderboard-header">
+      <div>
+        <span class="section-label">Rankings</span>
+        <h2 class="section-title">Leaderboard</h2>
+        <p class="section-subtitle">Top walkers on campus this semester.</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="comm-tabs">
+      <button class="comm-tab active" data-sort="steps">Steps</button>
+      <button class="comm-tab" data-sort="miles">Miles</button>
+      <button class="comm-tab" data-sort="walks">Walks</button>
+      <button class="comm-tab" data-sort="badges">Badges</button>
+    </div>
+
+    <!-- Podium (top 3) -->
+    <div class="comm-podium" id="podium"></div>
+
+    <!-- Full table -->
+    <div class="comm-table-wrap">
+      <table class="comm-table" id="leaderboard-table">
+        <thead>
+          <tr>
+            <th class="th-rank">#</th>
+            <th class="th-user">Walker</th>
+            <th class="th-metric" id="th-metric">Steps</th>
+            <th class="th-badges">Badges</th>
+            <th class="th-rating">Rating</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- BADGES KEY -->
+<section class="comm-badges-section">
+  <div class="section-inner">
+    <span class="section-label">Achievements</span>
+    <h2 class="section-title">Earn Badges</h2>
+    <p class="section-subtitle">Walk more, unlock more. Here's what you can earn.</p>
+    <div class="comm-badges-grid">
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🏅</div>
+        <div class="comm-badge-name">Trail Guide</div>
+        <div class="comm-badge-desc">Complete 25 walks as group leader</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🌙</div>
+        <div class="comm-badge-name">Night Owl</div>
+        <div class="comm-badge-desc">10 walks completed after 9 PM</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🌅</div>
+        <div class="comm-badge-name">Early Bird</div>
+        <div class="comm-badge-desc">10 walks completed before 8 AM</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🏛️</div>
+        <div class="comm-badge-name">Campus Legend</div>
+        <div class="comm-badge-desc">Walk every campus route at least once</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">⭐</div>
+        <div class="comm-badge-name">Rising Star</div>
+        <div class="comm-badge-desc">Earn a 4.8+ rating in your first month</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">📚</div>
+        <div class="comm-badge-name">Study Buddy</div>
+        <div class="comm-badge-desc">10 study break walks to the library</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🗺️</div>
+        <div class="comm-badge-name">Campus Explorer</div>
+        <div class="comm-badge-desc">Log walks to 15 unique destinations</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🏃</div>
+        <div class="comm-badge-name">Marathon Walker</div>
+        <div class="comm-badge-desc">Accumulate 100+ miles walked</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🦋</div>
+        <div class="comm-badge-name">Social Butterfly</div>
+        <div class="comm-badge-desc">Walk with 20 different people</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🎯</div>
+        <div class="comm-badge-name">10 Walks</div>
+        <div class="comm-badge-desc">Complete your first 10 walks</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">🔥</div>
+        <div class="comm-badge-name">25 Walks</div>
+        <div class="comm-badge-desc">You're a campus walking regular</div>
+      </div>
+      <div class="comm-badge-card">
+        <div class="comm-badge-icon">💎</div>
+        <div class="comm-badge-name">100 Walks</div>
+        <div class="comm-badge-desc">A true TrailMate veteran</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPS -->
+<section class="comm-tips-section">
+  <div class="section-inner">
+    <span class="section-label">Stay Safe</span>
+    <h2 class="section-title">Campus Safety Tips</h2>
+    <div class="comm-tips-grid" id="tips-grid"></div>
+  </div>
+</section>
 
 <!-- FOOTER -->
 <footer>
@@ -92,7 +240,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 TrailMate — Made with 💙 by UD Students</span>
+      <span>&copy; 2025 TrailMate — Made with 💙 by UD Students</span>
       <span>University of Delaware, Newark, DE 19716</span>
     </div>
   </div>

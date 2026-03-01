@@ -142,12 +142,16 @@ const communityStats = {
 };
 
 const leaderboard = [
-  { rank: 1, name: 'Maya K.',   initials: 'MK', avatarClass: 'avatar-blue',   walks: 47, rating: 5.0, year: 'Junior',       badge: 'Trail Guide' },
-  { rank: 2, name: 'Jordan R.', initials: 'JR', avatarClass: 'avatar-teal',   walks: 38, rating: 4.9, year: 'Sophomore',    badge: 'Night Owl' },
-  { rank: 3, name: 'Sam T.',    initials: 'ST', avatarClass: 'avatar-purple', walks: 31, rating: 5.0, year: 'Senior',       badge: 'Campus Legend' },
-  { rank: 4, name: 'Priya M.',  initials: 'PM', avatarClass: 'avatar-rose',   walks: 28, rating: 4.8, year: 'Freshman',     badge: 'Rising Star' },
-  { rank: 5, name: 'Chris B.',  initials: 'CB', avatarClass: 'avatar-orange', walks: 25, rating: 4.9, year: 'Grad Student', badge: 'Early Bird' },
-  { rank: 6, name: 'Leila A.',  initials: 'LA', avatarClass: 'avatar-green',  walks: 21, rating: 4.8, year: 'Junior',       badge: 'Social Butterfly' },
+  { rank: 1, name: 'Maya K.',   initials: 'MK', avatarClass: 'avatar-blue',   walks: 47, steps: 284300, miles: 128.4, rating: 5.0, year: 'Junior',       badge: 'Trail Guide',       badges: ['Trail Guide', 'Night Owl', '100 Walks', 'Early Bird'] },
+  { rank: 2, name: 'Jordan R.', initials: 'JR', avatarClass: 'avatar-teal',   walks: 38, steps: 231600, miles: 104.7, rating: 4.9, year: 'Sophomore',    badge: 'Night Owl',         badges: ['Night Owl', '50 Walks', 'Campus Explorer'] },
+  { rank: 3, name: 'Sam T.',    initials: 'ST', avatarClass: 'avatar-purple', walks: 31, steps: 198400, miles: 89.6,  rating: 5.0, year: 'Senior',       badge: 'Campus Legend',     badges: ['Campus Legend', 'Trail Guide', '50 Walks', 'Study Buddy', 'Mentor'] },
+  { rank: 4, name: 'Priya M.',  initials: 'PM', avatarClass: 'avatar-rose',   walks: 28, steps: 176200, miles: 79.5,  rating: 4.8, year: 'Freshman',     badge: 'Rising Star',       badges: ['Rising Star', '25 Walks'] },
+  { rank: 5, name: 'Chris B.',  initials: 'CB', avatarClass: 'avatar-orange', walks: 25, steps: 162800, miles: 73.6,  rating: 4.9, year: 'Grad Student', badge: 'Early Bird',        badges: ['Early Bird', 'Marathon Walker', '25 Walks'] },
+  { rank: 6, name: 'Leila A.',  initials: 'LA', avatarClass: 'avatar-green',  walks: 21, steps: 134500, miles: 60.8,  rating: 4.8, year: 'Junior',       badge: 'Social Butterfly', badges: ['Social Butterfly', '25 Walks'] },
+  { rank: 7, name: 'Aiden W.',  initials: 'AW', avatarClass: 'avatar-blue',   walks: 18, steps: 118900, miles: 53.7,  rating: 4.7, year: 'Sophomore',    badge: 'Night Owl',         badges: ['Night Owl', '10 Walks'] },
+  { rank: 8, name: 'Nora F.',   initials: 'NF', avatarClass: 'avatar-rose',   walks: 15, steps: 96200,  miles: 43.5,  rating: 5.0, year: 'Freshman',     badge: 'Rising Star',       badges: ['Rising Star', '10 Walks'] },
+  { rank: 9, name: 'Eli D.',    initials: 'ED', avatarClass: 'avatar-teal',   walks: 12, steps: 78400,  miles: 35.4,  rating: 4.9, year: 'Junior',       badge: 'Study Buddy',       badges: ['Study Buddy'] },
+  { rank: 10, name: 'Zara H.',  initials: 'ZH', avatarClass: 'avatar-purple', walks: 10, steps: 64100,  miles: 29.0,  rating: 4.8, year: 'Senior',       badge: 'Campus Explorer',   badges: ['Campus Explorer'] },
 ];
 
 const campusTips = [

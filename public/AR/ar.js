@@ -27,11 +27,11 @@ const ROUTES = [
     tags: ['wheelchair', 'night-safe', 'popular'],
     obstacles: [],
     waypoints: [
-      { lat: 39.6797, lng: -75.7520, name: 'Morris Library',        icon: '📚', instruction: 'Start at Morris Library main entrance, face The Green', a11y: 'Automatic doors, ramp on south side', obstacles: [] },
-      { lat: 39.6793, lng: -75.7514, name: 'Library Walk',          icon: '🚶', instruction: 'Continue northeast along Library Walk — smooth paved path', a11y: 'Wide path, no curbs, tactile pavement', obstacles: [] },
-      { lat: 39.6789, lng: -75.7511, name: 'The Green',             icon: '🌳', instruction: 'Cross The Green heading north toward Trabant', a11y: 'Paved perimeter path available for mobility aids', obstacles: [] },
-      { lat: 39.6800, lng: -75.7511, name: 'Trabant Approach',      icon: '🏛️', instruction: 'Head north — Trabant Student Center straight ahead', a11y: 'Flat paved surface, excellent lighting', obstacles: [] },
-      { lat: 39.6810, lng: -75.7511, name: 'Trabant Student Center', icon: '🎯', instruction: 'You have arrived at Trabant Student Center!', a11y: 'Accessible entrance on west side, elevator inside', obstacles: [] },
+      { lat: 39.6780, lng: -75.7529, name: 'Morris Library',        icon: '📚', instruction: 'Start at Morris Library main entrance, face The Green', a11y: 'Automatic doors, ramp on south side', obstacles: [] },
+      { lat: 39.6791, lng: -75.7533, name: 'Library Walk',          icon: '🚶', instruction: 'Continue north along Library Walk — smooth paved path', a11y: 'Wide path, no curbs, tactile pavement', obstacles: [] },
+      { lat: 39.6800, lng: -75.7537, name: 'The Green',             icon: '🌳', instruction: 'Cross The Green heading north toward Trabant', a11y: 'Paved perimeter path available for mobility aids', obstacles: [] },
+      { lat: 39.6813, lng: -75.7541, name: 'Trabant Approach',      icon: '🏛️', instruction: 'Head north — Trabant Student Center straight ahead', a11y: 'Flat paved surface, excellent lighting', obstacles: [] },
+      { lat: 39.6825, lng: -75.7546, name: 'Trabant Student Center', icon: '🎯', instruction: 'You have arrived at Trabant Student Center!', a11y: 'Accessible entrance on west side, elevator inside', obstacles: [] },
     ],
   },
   {
@@ -129,6 +129,13 @@ const OBSTACLE_LABELS = {
 function obstacleLabel(type) { return OBSTACLE_LABELS[type] || '⚠️ ' + type; }
 
 // ─────────────────────────────────────────────────────────────────
+// MAPBOX CONFIG
+// ─────────────────────────────────────────────────────────────────
+const MAPBOX_TOKEN = 'pk.eyJ1IjoidHlwaWNhbGl0eSIsImEiOiJjbW02cTAyM2swZ205MnFxNnNiMmFiOWp1In0.AyVjTmE5MbPnGquJ_NodiQ';
+let mapNavInstance  = null;   // Mapbox GL map for the map tab
+let mapNavReady     = false;  // true once style has loaded
+
+// ─────────────────────────────────────────────────────────────────
 // APP STATE
 // ─────────────────────────────────────────────────────────────────
 const state = {
@@ -141,6 +148,7 @@ const state = {
   cameraStream:   null,
   cameraOn:       false,
   voiceOn:        true,
+  navTab:         'ar',    // 'ar' | 'map'
   geoWatchId:     null,
   rafId:          null,
   startTime:      null,
@@ -164,15 +172,23 @@ document.addEventListener('DOMContentLoaded', () => {
   $('detail-back').addEventListener('click',    () => showScreen('list'));
   $('btn-start-ar').addEventListener('click',   () => beginNavigation(true));
   $('btn-start-text').addEventListener('click', () => beginNavigation(false));
+
+  // Close map modal when clicking outside the modal card
+  $('map-modal-overlay').addEventListener('click', (e) => {
+    if (e.target === $('map-modal-overlay')) closeMapModal();
+  });
 });
 
 // expose methods needed by inline onclick attributes
 window.arApp = {
   toggleVoice,
   toggleCamera,
+  cycleNavTab,
   exitNavigation,
   requestOrientationPermission,
   skipPermission,
+  closeMapModal,
+  fitNavMapToRoute,
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -322,10 +338,11 @@ function showRouteDetail(routeId) {
 async function beginNavigation(arMode) {
   if (!state.currentRoute) return;
 
-  state.waypointIdx = 0;
-  state.cameraOn    = arMode;
-  state.startTime   = Date.now();
+  state.waypointIdx  = 0;
+  state.cameraOn     = arMode;
+  state.startTime    = Date.now();
   state.warnedObsIdx = -1;
+  state.navTab       = 'ar';
 
   showScreen('navigate');
   buildWaypointDots();
@@ -370,7 +387,11 @@ function exitNavigation() {
   $('ar-video').style.display         = 'none';
   $('ar-canvas').style.display        = 'none';
   $('compass-bg').style.display       = 'none';
+  $('map-modal-overlay').classList.remove('is-open');
   window.speechSynthesis?.cancel();
+
+  // Destroy map instance
+  if (mapNavInstance) { mapNavInstance.remove(); mapNavInstance = null; mapNavReady = false; }
 
   showScreen('list');
 }
@@ -561,6 +582,8 @@ function startRenderLoop() {
 }
 
 function renderFrame() {
+  // Map tab is handled by Mapbox — skip canvas work entirely
+  if (state.navTab === 'map') return;
   // Always update compass view if shown
   if ($('compass-bg').style.display !== 'none') updateCompassView();
   if (!state.cameraOn) return;
@@ -1030,6 +1053,8 @@ function advanceWaypoint() {
 
   updateInstruction();
   if (state.voiceOn) speak(route.waypoints[state.waypointIdx].instruction);
+  // Refresh map route colours to reflect completed segment
+  if (mapNavReady) updateNavMapRoute();
 }
 
 function buildWaypointDots() {
@@ -1118,6 +1143,210 @@ function toggleVoice() {
   $('btn-voice').textContent = state.voiceOn ? '🔊' : '🔇';
   $('btn-voice').classList.toggle('muted', !state.voiceOn);
   if (!state.voiceOn) window.speechSynthesis?.cancel();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────────────────────────
+
+function cycleNavTab() {
+  showNavTab(state.navTab === 'ar' ? 'map' : 'ar');
+}
+
+function showNavTab(tab) {
+  console.log('[MAP] showNavTab called with:', tab);
+  state.navTab = tab;
+
+  // Update pill indicators
+  $('tab-dot-ar') .classList.toggle('is-active', tab === 'ar');
+  $('tab-dot-map').classList.toggle('is-active', tab === 'map');
+
+  if (tab === 'map') {
+    // Open the map modal
+    $('map-modal-overlay').classList.add('is-open');
+
+    // Give the modal a frame to render so the container has dimensions
+    requestAnimationFrame(() => {
+      if (!mapNavInstance) {
+        console.log('[MAP] No existing map instance, calling initNavMap()');
+        initNavMap();
+      } else {
+        console.log('[MAP] Map instance exists, calling resize()');
+        mapNavInstance.resize();
+      }
+    });
+  } else {
+    closeMapModal();
+  }
+}
+
+function closeMapModal() {
+  $('map-modal-overlay').classList.remove('is-open');
+  state.navTab = 'ar';
+  $('tab-dot-ar') .classList.add('is-active');
+  $('tab-dot-map').classList.remove('is-active');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// NAVIGATION MAP  (Mapbox satellite, top-down)
+// ─────────────────────────────────────────────────────────────────
+
+function initNavMap() {
+  console.log('[MAP] initNavMap() called');
+  const route = state.currentRoute;
+  if (!route || typeof mapboxgl === 'undefined') {
+    console.error('[MAP] ABORT: route=', !!route, 'mapboxgl=', typeof mapboxgl);
+    return;
+  }
+
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  const first = route.waypoints[0];
+  const container = $('nav-map-tab');
+  console.log('[MAP] Container dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+
+  try {
+    mapNavInstance = new mapboxgl.Map({
+      container:  'nav-map-tab',
+      style:      'mapbox://styles/mapbox/satellite-streets-v12',
+      center:     [first.lng, first.lat],
+      zoom:       17,
+      pitch:      0,
+      bearing:    state.headingReady ? state.heading : 0,
+      antialias:  true,
+    });
+    console.log('[MAP] Map instance created');
+  } catch (e) {
+    console.error('[MAP] ERROR creating Map:', e);
+    return;
+  }
+
+  const geo = new mapboxgl.GeolocateControl({
+    positionOptions:   { enableHighAccuracy: true },
+    trackUserLocation: true,
+    showUserHeading:   true,
+    showAccuracyCircle: true,
+  });
+  mapNavInstance.addControl(geo, 'bottom-right');
+  mapNavInstance.addControl(new mapboxgl.NavigationControl({ showCompass: true, showZoom: true }), 'top-right');
+
+  mapNavInstance.on('error', (e) => {
+    console.error('[MAP] Mapbox error:', e.error ? e.error.message : e);
+  });
+
+  mapNavInstance.on('load', () => {
+    console.log('[MAP] Map loaded, canvas:', mapNavInstance.getCanvas().width, 'x', mapNavInstance.getCanvas().height);
+    mapNavReady = true;
+    drawNavMapRoute();
+    fitNavMapToRoute();
+    setTimeout(() => { try { geo.trigger(); } catch { /* ignore */ } }, 400);
+  });
+}
+
+/** Fit the map bounds to show the entire route with padding. */
+function fitNavMapToRoute() {
+  console.log('[MAP] fitNavMapToRoute() called');
+  if (!mapNavInstance || !state.currentRoute) {
+    console.warn('[MAP] fitNavMapToRoute ABORT: mapNavInstance=', !!mapNavInstance, 'currentRoute=', !!state.currentRoute);
+    return;
+  }
+  const bounds = new mapboxgl.LngLatBounds();
+  state.currentRoute.waypoints.forEach(wp => bounds.extend([wp.lng, wp.lat]));
+  console.log('[MAP] Fitting bounds:', JSON.stringify(bounds));
+  mapNavInstance.fitBounds(bounds, { padding: 60, maxZoom: 17, duration: 600 });
+}
+
+/** Draw (or redraw) the route + waypoint markers on the nav map. */
+function drawNavMapRoute() {
+  console.log('[MAP] drawNavMapRoute() called, mapNavInstance=', !!mapNavInstance, 'mapNavReady=', mapNavReady);
+  if (!mapNavInstance || !mapNavReady) return;
+  const route = state.currentRoute;
+  if (!route) { console.warn('[MAP] drawNavMapRoute: no currentRoute'); return; }
+  console.log('[MAP] Drawing route:', route.name, 'with', route.waypoints.length, 'waypoints, waypointIdx=', state.waypointIdx);
+
+  const allCoords  = route.waypoints.map(wp => [wp.lng, wp.lat]);
+  const doneCoords = allCoords.slice(0, state.waypointIdx + 1);   // up to current (inclusive)
+  const pendCoords = allCoords.slice(state.waypointIdx);           // current → end
+
+  // ── Helper: upsert source + layer ────────────────────────────
+  function setLine(id, coords, paint) {
+    const geojson = { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } };
+    if (mapNavInstance.getSource(id)) {
+      mapNavInstance.getSource(id).setData(geojson);
+    } else {
+      mapNavInstance.addSource(id, { type: 'geojson', data: geojson });
+      mapNavInstance.addLayer({ id, type: 'line', source: id, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint });
+    }
+  }
+
+  // Route casing (dark border for contrast against satellite)
+  setLine('nm-pend-casing', pendCoords, { 'line-color': '#001a40', 'line-width': 10, 'line-opacity': 0.65 });
+  // Pending segment (UD blue)
+  setLine('nm-pending',     pendCoords, { 'line-color': '#00539F', 'line-width': 6,  'line-opacity': 1.0  });
+  // Completed segment (green)
+  if (doneCoords.length >= 2) {
+    setLine('nm-done', doneCoords, { 'line-color': '#22c55e', 'line-width': 5, 'line-opacity': 0.9 });
+  }
+
+  // ── Waypoint markers ─────────────────────────────────────────
+  const features = route.waypoints.map((wp, i) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [wp.lng, wp.lat] },
+    properties: {
+      status: i < state.waypointIdx ? 'done' : i === state.waypointIdx ? 'current' : 'pending',
+      label:  wp.name,
+    },
+  }));
+  const fcWp = { type: 'FeatureCollection', features };
+
+  if (mapNavInstance.getSource('nm-waypoints')) {
+    mapNavInstance.getSource('nm-waypoints').setData(fcWp);
+  } else {
+    mapNavInstance.addSource('nm-waypoints', { type: 'geojson', data: fcWp });
+    // White casing ring
+    mapNavInstance.addLayer({
+      id: 'nm-wp-casing', type: 'circle', source: 'nm-waypoints',
+      paint: { 'circle-radius': 13, 'circle-color': '#ffffff', 'circle-opacity': 0.92 },
+    });
+    // Coloured fill
+    mapNavInstance.addLayer({
+      id: 'nm-wp-fill', type: 'circle', source: 'nm-waypoints',
+      paint: {
+        'circle-radius': 9,
+        'circle-color': ['match', ['get', 'status'], 'done', '#22c55e', 'current', '#FFD200', '#00539F'],
+      },
+    });
+    // Label
+    mapNavInstance.addLayer({
+      id: 'nm-wp-label', type: 'symbol', source: 'nm-waypoints',
+      layout: {
+        'text-field': ['get', 'label'],
+        'text-font':  ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+        'text-size':  11,
+        'text-offset': [0, 1.8],
+        'text-anchor': 'top',
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(0,0,0,0.75)',
+        'text-halo-width': 1.5,
+      },
+    });
+  }
+
+  // Pan to keep current waypoint visible (without forcing zoom level)
+  const wp = route.waypoints[state.waypointIdx];
+  if (wp) {
+    // If the waypoint is already visible, don't pan at all
+    const mapBounds = mapNavInstance.getBounds();
+    if (!mapBounds.contains([wp.lng, wp.lat])) {
+      mapNavInstance.easeTo({ center: [wp.lng, wp.lat], duration: 700 });
+    }
+  }
+}
+
+/** Called after each waypoint advance to update segment colours. */
+function updateNavMapRoute() {
+  drawNavMapRoute(); // setData() calls inside are efficient — no layer teardown
 }
 
 // ─────────────────────────────────────────────────────────────────

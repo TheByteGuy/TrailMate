@@ -19,11 +19,11 @@
   </a>
   <ul class="nav-links">
     <li><a href="/" class="nav-active">Home</a></li>
-    <li><a href="/walks.html">Find Walks</a></li>
-    <li><a href="/safety.html">Safety</a></li>
-    <li><a href="/community.html">Community</a></li>
+    <li><a href="/Walks/walks.html">Find Walks</a></li>
+    <li><a href="/Safety/safety.html">Safety</a></li>
+    <li><a href="/Community/community.html">Community</a></li>
     <li><a href="/auth.html" id="nav-profile-link">Log In</a></li>
-    <li><a href="/walks.html" class="nav-cta">+ Post a Walk</a></li>
+    <li><a href="/Walks/walks.html" class="nav-cta">+ Post a Walk</a></li>
   </ul>
   <button class="nav-mobile-btn" onclick="window.location='/walks.html'">+ Post</button>
 </nav>
@@ -36,20 +36,165 @@
   <div class="hero-content">
     <div class="hero-text">
       <div class="hero-badge">
-        <span class="hero-badge-dot"></span>
-        University of Delaware
+        <span class="hero-badge-arrow" aria-hidden="true">▾</span>
+        <label class="sr-only" for="school-select">School</label>
+        <select id="school-select" class="hero-school-select" aria-label="Select school">
+          <option>Adelphi University</option>
+          <option>Alfred University</option>
+          <option>Allegheny College</option>
+          <option>Arizona State University</option>
+          <option>Binghamton University</option>
+          <option>Bloomfield College</option>
+          <option>Bowie State University</option>
+          <option>Bryn Mawr College</option>
+          <option>Bucknell University</option>
+          <option>Caldwell University</option>
+          <option>Canisius College</option>
+          <option>Capitol Technology University</option>
+          <option>Clarkson University</option>
+          <option>Colgate University</option>
+          <option>College of Southern Maryland</option>
+          <option>Columbia University</option>
+          <option>Commonwealth University of Pennsylvania</option>
+          <option>Community College of Philadelphia</option>
+          <option>Coppin State University</option>
+          <option>Cornell University</option>
+          <option>CUNY City College</option>
+          <option>CUNY City Tech</option>
+          <option>CUNY Hunter College</option>
+          <option>CUNY Queens College</option>
+          <option>CUNY Staten Island</option>
+          <option>Delaware County Community College</option>
+          <option>Delaware State University</option>
+          <option>Delaware Technical Community College</option>
+          <option>Denison University</option>
+          <option>Drew University</option>
+          <option>Drexel University</option>
+          <option>Elizabethtown College</option>
+          <option>Fairleigh Dickinson University</option>
+          <option>Fordham University</option>
+          <option>Frostburg State University</option>
+          <option>Georgia Institute of Technology</option>
+          <option>Georgian Court University (Lakewood)</option>
+          <option>Gettysburg College</option>
+          <option>Goucher College</option>
+          <option>Harrisburg Area Community College (HACC)</option>
+          <option>Hartwick College</option>
+          <option>Haverford College</option>
+          <option>Hobart and William Smith Colleges</option>
+          <option>Hood College</option>
+          <option>Indiana University of Pennsylvania (IUP)</option>
+          <option>Ithaca College</option>
+          <option>Johns Hopkins</option>
+          <option>Kean University</option>
+          <option>King's College</option>
+          <option>Kutztown University of Pennsylvania</option>
+          <option>La Salle University</option>
+          <option>Lafayette College</option>
+          <option>Lock Haven University</option>
+          <option>Long Island University (LIU)</option>
+          <option>Loyola University</option>
+          <option>Lycoming College</option>
+          <option>Manhattan College</option>
+          <option>Marist College</option>
+          <option>Marywood University</option>
+          <option>Messiah University</option>
+          <option>Middlesex College (Edison)</option>
+          <option>Millersville University of Pennsylvania</option>
+          <option>Misericordia University</option>
+          <option>Monmouth University</option>
+          <option>Monroe College</option>
+          <option>Montclair State University</option>
+          <option>Montgomery College</option>
+          <option>Montgomery County Community College</option>
+          <option>Moravian University</option>
+          <option>Morgan State University</option>
+          <option>Mount St. Mary's University</option>
+          <option>Muhlenberg College</option>
+          <option>Naval Academy</option>
+          <option>New Jersey Institute of Technology</option>
+          <option>New York Institute of Technology (NYIT) Long Island</option>
+          <option>New York Institute of Technology (NYIT), NYC</option>
+          <option>New York University (NYU)</option>
+          <option>Northern Virginia Community College</option>
+          <option>Notre Dame of Maryland University</option>
+          <option>Ocean County College (Toms River)</option>
+          <option>Pace University</option>
+          <option>Penn State University</option>
+          <option>Pennsylvania College of Technology</option>
+          <option>Princeton University</option>
+          <option>Ramapo College of New Jersey (Mahwah)</option>
+          <option>Rensselaer Polytechnic Institute</option>
+          <option>Rider University</option>
+          <option>Rochester Institute of Technology</option>
+          <option>Rowan University</option>
+          <option>Rutgers University</option>
+          <option>Saint Peter’s University (Jersey City)</option>
+          <option>Salisbury University</option>
+          <option>Seton Hall University</option>
+          <option>Shippensburg University</option>
+          <option>Siena College</option>
+          <option>Skidmore College</option>
+          <option>Slippery Rock University</option>
+          <option>St John's College</option>
+          <option>St. Mary's College of Maryland</option>
+          <option>Stevens Institute of Technology</option>
+          <option>Stevenson University</option>
+          <option>Stockton University</option>
+          <option>Stony Brook University</option>
+          <option>SUNY Geneseo</option>
+          <option>SUNY New Paltz</option>
+          <option>SUNY Oneonta</option>
+          <option>SUNY Oswego</option>
+          <option>SUNY Plattsburgh</option>
+          <option>SUNY Polytechnic Institute</option>
+          <option>Susquehanna University</option>
+          <option>Swarthmore College</option>
+          <option>Syracuse University</option>
+          <option>Temple University</option>
+          <option>The College of New Jersey</option>
+          <option>The University of Texas at Tyler</option>
+          <option>Thomas Edison State University</option>
+          <option>Towson College</option>
+          <option>Union College</option>
+          <option>University at Buffalo</option>
+          <option>University of Central Florida</option>
+          <option selected>University of Delaware</option>
+          <option>University of Maryland</option>
+          <option>University of Maryland Eastern Shore (UMES)</option>
+          <option>University of North Carolina at Pembroke</option>
+          <option>University of Pennsylvania</option>
+          <option>University of Rochester</option>
+          <option>Ursinus College (Collegeville)</option>
+          <option>Utica University</option>
+          <option>Vassar College</option>
+          <option>Villanova University</option>
+          <option>Washington College</option>
+          <option>West Chester University of Pennsylvania</option>
+          <option>Western Governors University</option>
+          <option>Wilkes University</option>
+          <option>William Paterson University</option>
+          <option>Wilmington University</option>
+          <option>Other</option>
+        </select>
       </div>
       <h1 class="hero-title">
         No One<br>
         Walks <span class="gold">Alone.</span>
       </h1>
+      <p class="hero-mobile-greeting">Hi [Placeholder Name]! Ready for your walk?</p>
+      <div class="hero-mobile-actions" aria-label="Primary actions">
+        <a href="/Walks/walks.html" class="hero-mobile-action hero-mobile-action-primary">Find a Walk</a>
+        <a href="/Walks/walks.html" class="hero-mobile-action hero-mobile-action-secondary">Post a Walk</a>
+        <a href="/Safety/safety.html" class="hero-mobile-action hero-mobile-action-secondary">Safety Check-In</a>
+      </div>
       <p class="hero-subtitle">
         TrailMate connects UD students for safe, peer-supported walks home at night.
         No formal calls, no pressure — just fellow Blue Hens looking out for each other.
       </p>
       <div class="hero-actions">
-        <a href="/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
-        <a href="/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
+        <a href="/Walks/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
+        <a href="/Safety/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -167,25 +312,25 @@
     <div class="section-label">Everything You Need</div>
     <h2 class="section-title">Built for student<br>safety &amp; community.</h2>
     <div class="features-grid">
-      <a href="/walks.html" class="feature-card fade-up">
+      <a href="/Walks/walks.html" class="feature-card fade-up">
         <div class="feature-card-icon">🗺️</div>
         <div class="feature-card-title">Find Walks</div>
         <div class="feature-card-desc">Browse active walk requests near campus. Filter by time, type, and route. Join in one tap.</div>
         <div class="feature-card-link">Browse walks →</div>
       </a>
-      <a href="/safety.html" class="feature-card fade-up" style="transition-delay:0.1s;">
+      <a href="/Safety/safety.html" class="feature-card fade-up" style="transition-delay:0.1s;">
         <div class="feature-card-icon gold">⏱️</div>
         <div class="feature-card-title">Safety Check-In</div>
         <div class="feature-card-desc">Set a countdown timer for your walk. If you don't check in, your emergency contact is alerted.</div>
         <div class="feature-card-link">Start check-in →</div>
       </a>
-      <a href="/safety.html#routes" class="feature-card fade-up" style="transition-delay:0.2s;">
+      <a href="/Safety/safety.html#routes" class="feature-card fade-up" style="transition-delay:0.2s;">
         <div class="feature-card-icon green">📍</div>
         <div class="feature-card-title">Safe Routes</div>
         <div class="feature-card-desc">Pre-vetted campus routes rated by lighting, camera coverage, and UDPD patrol frequency.</div>
         <div class="feature-card-link">View routes →</div>
       </a>
-      <a href="/community.html" class="feature-card fade-up" style="transition-delay:0.3s;">
+      <a href="/Community/community.html" class="feature-card fade-up" style="transition-delay:0.3s;">
         <div class="feature-card-icon purple">🏆</div>
         <div class="feature-card-title">Community</div>
         <div class="feature-card-desc">See who's walking the most, earn badges, and access campus safety tips from students.</div>
@@ -205,8 +350,8 @@
       Hundreds of UD students are already using TrailMate to get home safely. Join them.
     </p>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      <a href="/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
-      <a href="/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
+      <a href="/Walks/walks.html" class="btn-primary">🗺️ Find a Walk Partner</a>
+      <a href="/Safety/safety.html" class="btn-secondary">🛡️ Safety Check-In</a>
     </div>
   </div>
 </section>
@@ -226,25 +371,25 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-col-links">
-          <li><a href="/walks.html">Find a Walk</a></li>
-          <li><a href="/walks.html">Post a Walk</a></li>
+          <li><a href="/Walks/walks.html">Find a Walk</a></li>
+          <li><a href="/Walks/walks.html">Post a Walk</a></li>
           <li><a href="/#how-it-works">How It Works</a></li>
-          <li><a href="/safety.html">Safety Features</a></li>
+          <li><a href="/Safety/safety.html">Safety Features</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">Safety</div>
         <ul class="footer-col-links">
           <li><a href="tel:3028312222">UDPD: (302) 831-2222</a></li>
-          <li><a href="/safety.html">Safety Guidelines</a></li>
-          <li><a href="/safety.html#report">Report Concern</a></li>
-          <li><a href="/community.html">Community Standards</a></li>
+          <li><a href="/Safety/safety.html">Safety Guidelines</a></li>
+          <li><a href="/Safety/safety.html#report">Report Concern</a></li>
+          <li><a href="/Community/community.html">Community Standards</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">About</div>
         <ul class="footer-col-links">
-          <li><a href="/community.html">Our Story</a></li>
+          <li><a href="/Community/community.html">Our Story</a></li>
           <li><a href="#">Contact Us</a></li>
           <li><a href="#">Privacy Policy</a></li>
           <li><a href="#">Terms of Use</a></li>

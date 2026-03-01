@@ -190,7 +190,7 @@ function buildCardHTML(walk) {
 // ---- LOGIN PROMPT ----
 function showLoginPrompt() {
   const container = document.getElementById('toast-container');
-  if (!container) { window.location.href = 'auth.html'; return; }
+  if (!container) { window.location.href = '/Auth/auth.html'; return; }
 
   container.querySelector('.login-prompt-toast')?.remove();
 
@@ -201,7 +201,7 @@ function showLoginPrompt() {
     <div>
       <div style="font-weight:700;margin-bottom:4px;">Sign in to join walks</div>
       <div style="font-size:12px;opacity:0.8;margin-bottom:10px;">You need a TrailMate account to join a walk.</div>
-      <a href="auth.html" style="display:inline-block;background:#fff;color:#00539F;font-weight:700;font-size:13px;padding:6px 16px;border-radius:6px;text-decoration:none;">Log In &rarr;</a>
+      <a href="/Auth/auth.html" style="display:inline-block;background:#fff;color:#00539F;font-weight:700;font-size:13px;padding:6px 16px;border-radius:6px;text-decoration:none;">Log In &rarr;</a>
     </div>`;
   container.appendChild(toast);
 

@@ -44,10 +44,10 @@ async function updateNavForAuth() {
     const { data: profile } = await supabase
       .from('profiles').select('username').eq('id', session.user.id).single();
     link.textContent = profile ? '@' + profile.username : 'Profile';
-    link.href = '/profile.html';
+    link.href = '/Profile/profile.html';
   } else {
     link.textContent = 'Log In';
-    link.href = '/auth.html';
+    link.href = '/Auth/auth.html';
   }
 }
 updateNavForAuth();

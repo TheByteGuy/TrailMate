@@ -131,6 +131,14 @@ function renderWalks(walks) {
   grid.innerHTML = walks.map(buildCardHTML).join('');
 }
 
+const WALK_TYPE_STYLES = {
+  night:    { label: '🌙 Night Safety',    class: 'badge-night' },
+  morning:  { label: '☀️ Morning',        class: 'badge-morning' },
+  study:    { label: '📚 Study Break',    class: 'badge-study' },
+  exercise: { label: '🏃 Exercise',       class: 'badge-exercise' },
+  casual:   { label: '😊 Casual',        class: 'badge-casual' }
+};
+
 function buildCardHTML(walk) {
   // 1. Safe fallbacks for Supabase case-insensitivity
   const max = walk.maxSpots ?? walk.maxspots ?? 1;
@@ -154,7 +162,10 @@ function buildCardHTML(walk) {
           <div class="avatar ${walk.avatarClass || ''}">${walk.initials || '?'}</div>
           <div><div class="walk-user-name">${walk.name}</div><div class="walk-user-year">${walk.year} · UD Verified ✓</div></div>
         </div>
-        <span class="walk-type-badge ${walk.typeBadge || ''}">${walk.typeLabel || 'Walk'}</span>
+        ${(() => {
+          const typeInfo = WALK_TYPE_STYLES[walk.type] || { label: 'Walk', class: '' };
+          return `<span class="walk-type-badge ${typeInfo.class}">${typeInfo.label}</span>`;
+        })()}
       </div>
 
       <div class="walk-route"><span class="walk-route-from">${walk.from}</span> → <span class="walk-route-to">${walk.to}</span></div>

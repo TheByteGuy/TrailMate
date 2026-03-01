@@ -3,6 +3,11 @@
 // ---- CONFIG ----
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+
+let navigationSteps = []; // Store the steps from Mapbox
+let lastSpokenStepIndex = -1; // Track which turn was last announced
+let isARMode = false;
+
 export const supabase = createClient(
   'https://zsujhugkllbnqidswkgt.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzdWpodWdrbGxibnFpZHN3a2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDEzMDksImV4cCI6MjA4Nzg3NzMwOX0.uhVV5pfHjADE19ZrSUdvVKGi3ZgmRi9c0VRClCC8NsM'
@@ -671,10 +676,64 @@ function nearestCoordIndex(coords, lng, lat) {
   return idx;
 }
 
+async function playVoiceAlert(text) {
+  const VOICE_ID = "21m00Tcm4lfs74tC97CQ"; // Default "Alice" voice
+  const API_KEY = "sk_77d684218c44bd2c252be16c0ace3ee1c9b70964cb8dc1e7"; // Replace with your NEW key
+
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'xi-api-key': API_KEY // Key must be inside headers
+      },
+      body: JSON.stringify({ 
+        text: text,
+        model_id: "eleven_turbo_v2_5", // Fastest model for navigation
+        voice_settings: { stability: 0.5, similarity_boost: 0.5 }
+      })
+    });
+
+    if (!response.ok) throw new Error("ElevenLabs API Limit or Error");
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+  } catch (e) {
+    console.warn("ElevenLabs failed, using browser fallback", e);
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function checkNavigationVoice(lng, lat) {
+  if (!navigationSteps.length) return;
+
+  // Find if we are within 20 meters (~65 feet) of the next instruction point
+  const nextStepIdx = lastSpokenStepIndex + 1;
+  if (nextStepIdx >= navigationSteps.length) return;
+
+  const nextStep = navigationSteps[nextStepIdx];
+  const [stepLng, stepLat] = nextStep.maneuver.location;
+
+  // Simple distance check (approximate)
+  const dist = Math.sqrt(Math.pow(lng - stepLng, 2) + Math.pow(lat - stepLat, 2));
+  
+  // 0.0002 is roughly 20-25 meters
+  if (dist < 0.0002) {
+    lastSpokenStepIndex = nextStepIdx;
+    playVoiceAlert(nextStep.maneuver.instruction);
+  }
+}
 // Split the route at the user's nearest point: grey behind, green ahead
 function updateRouteProgress(lng, lat) {
   if (!routeCoordinates || !walkMap) return;
   const idx = nearestCoordIndex(routeCoordinates, lng, lat);
+
+  // --- NEW: VOICE TRIGGER LOGIC ---
+  checkNavigationVoice(lng, lat);
+  // --------------------------------
 
   // LineString needs ≥2 coords
   const toLine = c => c.length > 1 ? c : [c[0], c[0]];
@@ -693,12 +752,16 @@ function updateRouteProgress(lng, lat) {
 async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
   try {
     const res = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/walking/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${fromLng},${fromLat};${toLng},${toLat}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`
     );
     const data = await res.json();
     if (!data.routes?.length) return;
 
-    const route = data.routes[0].geometry; // GeoJSON LineString
+    // --- ADD THIS LINE ---
+    navigationSteps = data.routes[0].legs[0].steps; 
+    // ---------------------
+
+    const route = data.routes[0].geometry;
     routeCoordinates = route.coordinates;
 
     // Persist distance so endWalk can credit stats even if map is closed
@@ -802,6 +865,11 @@ async function startLocationBroadcast(walkId) {
           participantMarkers.get(uid)?.remove();
           participantMarkers.delete(uid);
         } else if (newRow?.user_id !== userId) {
+          // --- ADD THIS LINE BELOW ---
+          if (eventType === 'INSERT') {
+            playVoiceAlert(`${newRow.username} has joined your route.`);
+          }
+          // ---------------------------
           addOrMoveMarker(newRow);
         }
       })

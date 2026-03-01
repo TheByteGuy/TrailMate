@@ -166,6 +166,9 @@ function renderWalks(walks) {
     return;
   }
   grid.innerHTML = walks.map(buildCardHTML).join('');
+  
+  // Refresh trending banner whenever walks update
+  loadTrendingWalks();
 }
 
 const WALK_TYPE_STYLES = {
@@ -966,6 +969,76 @@ async function endWalk(id) {
     window.showToast?.('Could not end walk', err.message, true);
   }
 }
+
+async function loadTrendingWalks() {
+  try {
+    const res = await fetch("http://localhost:3000/api/trending");
+    
+    // Check if response is ok
+    if (!res.ok) {
+      console.warn(`Server returned ${res.status}, falling back to Supabase`);
+      loadTrendingFromSupabase();
+      return;
+    }
+
+    // Check content type
+    const contentType = res.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      console.warn(`Wrong content type: ${contentType}, falling back to Supabase`);
+      loadTrendingFromSupabase();
+      return;
+    }
+
+    const data = await res.json();
+    console.log("Trending routes:", data);
+    if (data && data.length > 0) highlightTrendingRoute(data[0]);
+  } catch (err) {
+    console.warn("Failed to load trending walks from server, falling back to Supabase:", err);
+    loadTrendingFromSupabase();
+  }
+}
+
+async function loadTrendingFromSupabase() {
+  try {
+    // Get walks sorted by joinedspots (most joined = trending)
+    const { data, error } = await supabase
+      .from('walks')
+      .select('*')
+      .order('joinedspots', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    if (data && data.length > 0) highlightTrendingRoute(data[0]);
+  } catch (err) {
+    console.error("Failed to load trending walks:", err);
+  }
+}
+
+function highlightTrendingRoute(walk) {
+  // Remove old banner first
+  document.querySelector('.trending-banner')?.remove();
+  
+  // Create a banner showing the most popular walk
+  const banner = document.createElement('div');
+  banner.className = 'trending-banner';
+  banner.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
+      <div>
+        <span style="font-weight:700;font-size:14px;">🔥 Trending Now</span>
+        <div style="font-size:13px;color:#fff;margin-top:4px;opacity:0.9;">
+          ${walk.name} · ${(walk.joinedspots || 0) + 1}/${walk.maxspots || 1} people
+        </div>
+      </div>
+      <button class="btn-primary" style="white-space:nowrap;font-size:12px;padding:6px 12px;" onclick="this.closest('.trending-banner').remove();">Dismiss</button>
+    </div>
+  `;
+  document.body.insertBefore(banner, document.body.firstChild);
+  
+  // Auto-remove after 8 seconds
+  setTimeout(() => banner.remove(), 8000);
+}
+
+loadTrendingWalks();
 
 window.openModal = openModal;
 window.closeModal = closeModal;

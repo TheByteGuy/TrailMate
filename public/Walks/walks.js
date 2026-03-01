@@ -43,6 +43,7 @@ let currentWalkData = null;
 let userLocation = null;   // cached once on modal open
 let fromCoords = null;     // set when user picks a suggestion for From
 let toCoords = null;       // set when user picks a suggestion for To
+let routeCoordinates = null; // full route coords array for progress tracking
 
 // ---- LOCATION BROADCAST STATE ----
 let locationInterval = null;
@@ -462,6 +463,11 @@ function initMap(walk) {
   });
   walkMap.addControl(geolocateControl, 'bottom-right');
 
+  // Update route progress coloring on every GPS ping
+  geolocateControl.on('geolocate', (e) => {
+    updateRouteProgress(e.coords.longitude, e.coords.latitude);
+  });
+
   walkMap.on('style.load', () => {
     if (theme.buildings) {
       const layers = walkMap.getStyle().layers;
@@ -569,6 +575,36 @@ function enterCssFullscreen(modal, btn) {
   });
 });
 
+// Returns the index of the closest coordinate in coords[] to (lng, lat)
+function nearestCoordIndex(coords, lng, lat) {
+  let minDist = Infinity, idx = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const dx = coords[i][0] - lng, dy = coords[i][1] - lat;
+    const d = dx * dx + dy * dy;
+    if (d < minDist) { minDist = d; idx = i; }
+  }
+  return idx;
+}
+
+// Split the route at the user's nearest point: grey behind, green ahead
+function updateRouteProgress(lng, lat) {
+  if (!routeCoordinates || !walkMap) return;
+  const idx = nearestCoordIndex(routeCoordinates, lng, lat);
+
+  // LineString needs ≥2 coords
+  const toLine = c => c.length > 1 ? c : [c[0], c[0]];
+
+  const traveled  = toLine(routeCoordinates.slice(0, idx + 1));
+  const remaining = toLine(routeCoordinates.slice(idx));
+
+  walkMap.getSource('route-traveled')?.setData({
+    type: 'Feature', geometry: { type: 'LineString', coordinates: traveled }
+  });
+  walkMap.getSource('route-remaining')?.setData({
+    type: 'Feature', geometry: { type: 'LineString', coordinates: remaining }
+  });
+}
+
 async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
   try {
     const res = await fetch(
@@ -578,20 +614,36 @@ async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
     if (!data.routes?.length) return;
 
     const route = data.routes[0].geometry; // GeoJSON LineString
+    routeCoordinates = route.coordinates;
 
-    // Remove old route if exists
-    if (walkMap.getSource('route')) {
-      if (walkMap.getLayer('route-line')) walkMap.removeLayer('route-line');
-      walkMap.removeSource('route');
-    }
+    // Remove old route layers/sources if they exist
+    ['route-traveled', 'route-remaining'].forEach(id => {
+      if (walkMap.getLayer(id)) walkMap.removeLayer(id);
+      if (walkMap.getSource(id)) walkMap.removeSource(id);
+    });
 
-    // Add new route
-    walkMap.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: route } });
-
+    // Traveled segment — starts as just the start point (will grow with GPS updates)
+    walkMap.addSource('route-traveled', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [route.coordinates[0], route.coordinates[0]] } }
+    });
     walkMap.addLayer({
-      id: 'route-line',
+      id: 'route-traveled',
       type: 'line',
-      source: 'route',
+      source: 'route-traveled',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#9e9e9e', 'line-width': 6, 'line-opacity': 0.75 }
+    });
+
+    // Remaining segment — starts as the full route (green)
+    walkMap.addSource('route-remaining', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: route }
+    });
+    walkMap.addLayer({
+      id: 'route-remaining',
+      type: 'line',
+      source: 'route-remaining',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
       paint: { 'line-color': '#1abc9c', 'line-width': 6 }
     });
@@ -715,6 +767,7 @@ function closeWalkMap() {
   document.getElementById('map-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (walkMap) { walkMap.remove(); walkMap = null; }
+  routeCoordinates = null;
   stopLocationBroadcast();
 }
 

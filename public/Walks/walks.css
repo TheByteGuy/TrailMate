@@ -139,6 +139,26 @@
   border-radius: 0;
 }
 
+/* ---- PARTICIPANT LOCATION MARKERS ---- */
+.participant-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FFD200;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body, sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #00539F;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.participant-marker:hover { transform: scale(1.15); }
+
 /* ---- LOCATION AUTOCOMPLETE ---- */
 .form-group { position: relative; }
 

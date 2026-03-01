@@ -7,6 +7,58 @@ let viewingUserId = null;   // the profile being viewed
 let isOwnProfile = false;
 let currentNetworkTab = 'following';
 
+// Shared stats for badge rendering (populated from DB + follow counts)
+const profileStats = { total_walks: 0, total_steps: 0, total_miles: 0, followers: 0 };
+
+// ---- BADGES ----
+// tier = difficulty rank (higher = harder to earn, shown first in search results)
+const BADGES = [
+  // Walks
+  { icon: '🥾', label: 'First Steps',     desc: 'Complete your first walk',  cat: 'walk',   tier: 1,  check: s => s.total_walks >= 1  },
+  { icon: '🚶', label: 'Trail Buddy',      desc: '5 walks completed',         cat: 'walk',   tier: 3,  check: s => s.total_walks >= 5  },
+  { icon: '🗺️', label: 'Campus Explorer', desc: '10 walks completed',        cat: 'walk',   tier: 5,  check: s => s.total_walks >= 10 },
+  { icon: '🌙', label: 'Night Owl',        desc: '20 walks completed',        cat: 'walk',   tier: 7,  check: s => s.total_walks >= 20 },
+  { icon: '🏆', label: 'UD Legend',        desc: '50 walks completed',        cat: 'walk',   tier: 10, check: s => s.total_walks >= 50 },
+  // Miles
+  { icon: '📍', label: 'First Mile',       desc: 'Walk your first mile',      cat: 'miles',  tier: 1,  check: s => s.total_miles >= 1  },
+  { icon: '🛤️', label: '10 Mile Club',    desc: '10 miles covered',          cat: 'miles',  tier: 5,  check: s => s.total_miles >= 10 },
+  { icon: '🏅', label: 'Marathon Prep',    desc: '26 miles covered',          cat: 'miles',  tier: 9,  check: s => s.total_miles >= 26 },
+  // Steps
+  { icon: '👣', label: 'Step Starter',     desc: '1,000 steps taken',         cat: 'steps',  tier: 1,  check: s => s.total_steps >= 1000  },
+  { icon: '💪', label: 'On the Move',      desc: '10,000 steps taken',        cat: 'steps',  tier: 5,  check: s => s.total_steps >= 10000 },
+  { icon: '🔥', label: 'Step Master',      desc: '50,000 steps taken',        cat: 'steps',  tier: 9,  check: s => s.total_steps >= 50000 },
+  // Social
+  { icon: '🤝', label: 'Social Walker',    desc: '5 followers',               cat: 'social', tier: 3,  check: s => s.followers >= 5  },
+  { icon: '🌟', label: 'Community Pillar', desc: '20 followers',              cat: 'social', tier: 7,  check: s => s.followers >= 20 },
+];
+
+// Returns up to `max` of the hardest earned badges for a given user object
+function getTopBadges(u, max = 3) {
+  const stats = {
+    total_walks: u.total_walks ?? 0,
+    total_steps: u.total_steps ?? 0,
+    total_miles: parseFloat(u.total_miles ?? 0),
+    followers: 0, // follower count not available in list context
+  };
+  return BADGES
+    .filter(b => b.check(stats))
+    .sort((a, b) => b.tier - a.tier)
+    .slice(0, max);
+}
+
+function renderBadges() {
+  const grid = document.getElementById('badges-grid');
+  if (!grid) return;
+  grid.innerHTML = BADGES.map(b => {
+    const earned = b.check(profileStats);
+    return `
+      <div class="badge-item ${earned ? `badge-earned badge-${b.cat}` : 'badge-locked'}" title="${b.desc}">
+        <span class="badge-icon">${b.icon}</span>
+        <span class="badge-label">${b.label}</span>
+      </div>`;
+  }).join('');
+}
+
 // Avatar color classes keyed by charCode % 6
 const AVATAR_CLASSES = ['avatar-blue', 'avatar-teal', 'avatar-green', 'avatar-purple', 'avatar-orange', 'avatar-gold'];
 
@@ -100,8 +152,14 @@ function renderProfileData(profile) {
   document.getElementById('profile-bio').textContent = profile.bio || '';
   document.getElementById('bio-textarea').value = profile.bio || '';
 
+  document.getElementById('stat-walks').textContent = (profile.total_walks ?? 0).toLocaleString();
   document.getElementById('stat-steps').textContent = (profile.total_steps ?? 0).toLocaleString();
   document.getElementById('stat-miles').textContent = parseFloat(profile.total_miles ?? 0).toFixed(1);
+
+  profileStats.total_walks = profile.total_walks ?? 0;
+  profileStats.total_steps = profile.total_steps ?? 0;
+  profileStats.total_miles = parseFloat(profile.total_miles ?? 0);
+  renderBadges();
 }
 
 // ---- LOAD FOLLOW COUNTS ----
@@ -113,6 +171,9 @@ async function loadFollowCounts(userId) {
 
   document.getElementById('stat-followers').textContent = followers ?? 0;
   document.getElementById('stat-following').textContent = following ?? 0;
+
+  profileStats.followers = followers ?? 0;
+  renderBadges();
 }
 
 // ---- CHECK IF FOLLOWING ----
@@ -202,7 +263,7 @@ async function searchUsers() {
 
   const { data: users, error } = await supabase
     .from('profiles')
-    .select('id, username, bio')
+    .select('id, username, bio, total_walks, total_steps, total_miles')
     .ilike('username', `%${query}%`)
     .limit(10);
 
@@ -218,7 +279,7 @@ async function searchUsers() {
 async function loadFollowing(userId) {
   const { data, error } = await supabase
     .from('follows')
-    .select('profiles!follows_following_id_fkey(id, username, bio)')
+    .select('profiles!follows_following_id_fkey(id, username, bio, total_walks, total_steps, total_miles)')
     .eq('follower_id', userId);
 
   if (error) return [];
@@ -229,7 +290,7 @@ async function loadFollowing(userId) {
 async function loadFollowers(userId) {
   const { data, error } = await supabase
     .from('follows')
-    .select('profiles!follows_follower_id_fkey(id, username, bio)')
+    .select('profiles!follows_follower_id_fkey(id, username, bio, total_walks, total_steps, total_miles)')
     .eq('following_id', userId);
 
   if (error) return [];
@@ -264,14 +325,21 @@ async function showNetworkTab(tab) {
 // ---- BUILD USER ITEM HTML ----
 function buildUserItem(u) {
   const bioText = u.bio ? u.bio.slice(0, 60) + (u.bio.length > 60 ? '…' : '') : 'No bio yet';
+  const topBadges = getTopBadges(u, 3);
+  const badgesHtml = topBadges.length
+    ? `<div class="user-result-badges">${topBadges.map(b =>
+        `<span class="badge-item badge-mini badge-earned badge-${b.cat}" title="${b.desc}">${b.icon} ${b.label}</span>`
+      ).join('')}</div>`
+    : '';
   return `
     <div class="user-result-item">
       <div class="avatar ${avatarClass(u.username)}" style="width:40px;height:40px;font-size:15px;flex-shrink:0;">${initials(u.username)}</div>
       <div class="user-result-info">
         <div class="user-result-name">@${u.username}</div>
         <div class="user-result-bio">${bioText}</div>
+        ${badgesHtml}
       </div>
-      <a href="/profile.html?id=${u.id}" class="user-result-link">View</a>
+      <a href="/Profile/profile.html?id=${u.id}" class="user-result-link">View</a>
     </div>`;
 }
 

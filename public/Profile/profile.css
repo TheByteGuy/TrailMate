@@ -116,16 +116,16 @@
   font-family: var(--font-body);
 }
 
-/* ---- STATS ROW ---- */
+/* ---- SOCIAL STATS ROW (Followers / Following) ---- */
 .profile-stats-row {
   display: flex;
   align-items: stretch;
   justify-content: center;
   width: 100%;
-  max-width: 420px;
+  max-width: 260px;
   background: var(--gray-50, #f8f9fa);
   border: 1px solid var(--gray-200);
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -136,7 +136,7 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 14px 8px;
+  padding: 14px 12px;
   border-right: 1px solid var(--gray-200);
 }
 
@@ -160,11 +160,68 @@
   white-space: nowrap;
 }
 
-/* Thicker divider between social and activity stat groups */
-.profile-stats-divider {
-  width: 2px;
-  background: var(--gray-200);
+/* ---- ACTIVITY STATS BOX (Walks / Steps / Miles) ---- */
+.activity-stats {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(135deg, #e8f0fb 0%, #eef4ff 100%);
+  border: 1px solid #c5d8f5;
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.activity-stats-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.activity-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.activity-stat-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.activity-stat-number {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--blue);
+  line-height: 1;
+}
+
+.activity-stat-label {
+  font-size: 11px;
+  color: #5a7db5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.activity-stat-divider {
+  width: 1px;
+  height: 48px;
+  background: #c5d8f5;
   flex-shrink: 0;
+  margin: 0 4px;
 }
 
 /* ---- ACTION BUTTONS ---- */
@@ -364,6 +421,92 @@
   padding: 20px 0;
 }
 
+/* ---- BADGES ---- */
+.badges-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.badge-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: 1px solid transparent;
+  cursor: default;
+  transition: transform 0.15s;
+}
+
+.badge-item:hover {
+  transform: scale(1.06);
+}
+
+.badge-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.badge-label {
+  white-space: nowrap;
+}
+
+/* Earned — color per category */
+.badge-earned.badge-walk {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.badge-earned.badge-miles {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.badge-earned.badge-steps {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.badge-earned.badge-social {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+/* Locked — greyed out */
+.badge-locked {
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-400, #9ca3af);
+  border-color: var(--gray-200, #e5e7eb);
+  opacity: 0.55;
+}
+
+/* Mini badges shown in search / network results */
+.badge-mini {
+  padding: 3px 9px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.badge-mini .badge-icon {
+  font-size: 12px;
+}
+
+.user-result-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
 /* ---- NETWORK TABS ---- */
 .friends-tabs {
   display: flex;
@@ -418,6 +561,19 @@
 
   .profile-stat-label {
     font-size: 10px;
+  }
+
+  .activity-stats {
+    max-width: 100%;
+    padding: 14px 12px;
+  }
+
+  .activity-stat-number {
+    font-size: 18px;
+  }
+
+  .activity-stat-icon {
+    font-size: 15px;
   }
 
   .search-bar {

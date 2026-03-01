@@ -69,7 +69,7 @@
       </div>
     </div>
 
-    <!-- Stats: followers / following / steps / miles -->
+    <!-- Social stats -->
     <div class="profile-stats-row">
       <div class="profile-stat">
         <div class="profile-stat-number" id="stat-followers">0</div>
@@ -79,14 +79,29 @@
         <div class="profile-stat-number" id="stat-following">0</div>
         <div class="profile-stat-label">Following</div>
       </div>
-      <div class="profile-stats-divider"></div>
-      <div class="profile-stat">
-        <div class="profile-stat-number" id="stat-steps">0</div>
-        <div class="profile-stat-label">Steps</div>
-      </div>
-      <div class="profile-stat">
-        <div class="profile-stat-number" id="stat-miles">0.0</div>
-        <div class="profile-stat-label">Miles</div>
+    </div>
+
+    <!-- Activity stats -->
+    <div class="activity-stats">
+      <div class="activity-stats-title">Walk Activity</div>
+      <div class="activity-stats-row">
+        <div class="activity-stat">
+          <div class="activity-stat-icon">🚶</div>
+          <div class="activity-stat-number" id="stat-walks">0</div>
+          <div class="activity-stat-label">Walks</div>
+        </div>
+        <div class="activity-stat-divider"></div>
+        <div class="activity-stat">
+          <div class="activity-stat-icon">👣</div>
+          <div class="activity-stat-number" id="stat-steps">0</div>
+          <div class="activity-stat-label">Steps</div>
+        </div>
+        <div class="activity-stat-divider"></div>
+        <div class="activity-stat">
+          <div class="activity-stat-icon">📍</div>
+          <div class="activity-stat-number" id="stat-miles">0.0</div>
+          <div class="activity-stat-label">Miles</div>
+        </div>
       </div>
     </div>
 
@@ -94,6 +109,12 @@
     <div class="profile-actions" id="profile-actions">
       <!-- Populated by JS: edit bio + logout (own) OR follow/unfollow (other) -->
     </div>
+  </div>
+
+  <!-- Achievements Card -->
+  <div class="profile-panel" id="badges-panel">
+    <div class="profile-panel-title">Achievements</div>
+    <div class="badges-grid" id="badges-grid"></div>
   </div>
 
   <!-- Friend Search -->

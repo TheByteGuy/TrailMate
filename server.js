@@ -294,6 +294,25 @@ app.post('/api/report', (req, res) => {
   res.json({ success: true, message: 'Report received. Thank you for keeping TrailMate safe.' });
 });
 
+// ---- TRENDING API ----
+app.get('/api/trending', (req, res) => {
+  // Trending = sorted by most joined spots (highest demand)
+  const trending = walks
+    .sort((a, b) => (b.joinedSpots ?? b.joinedspots) - (a.joinedSpots ?? a.joinedspots))
+    .slice(0, 5)  // Top 5 trending
+    .map(w => ({
+      id: w.id,
+      name: w.name,
+      from: w.from,
+      to: w.to,
+      joinedSpots: w.joinedSpots ?? w.joinedspots,
+      maxSpots: w.maxSpots ?? w.maxspots,
+      type: w.type,
+      isoTime: w.isoTime
+    }));
+  res.json(trending);
+});
+
 // Serve the frontend for unknown routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

@@ -620,3 +620,19 @@ footer { background: var(--gray-900); color: var(--white); padding: 60px 40px 40
   }
   .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
 }
+
+/* ---- TRENDING BANNER ---- */
+.trending-banner {
+  position: fixed; top: 80px; left: 20px; right: 20px; z-index: 50;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+  animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

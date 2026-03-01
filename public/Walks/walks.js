@@ -616,6 +616,11 @@ async function drawWalkRoute(fromLng, fromLat, toLng, toLat) {
     const route = data.routes[0].geometry; // GeoJSON LineString
     routeCoordinates = route.coordinates;
 
+    // Persist distance so endWalk can credit stats even if map is closed
+    const distMeters = data.routes[0].distance;
+    currentWalkData.distance_meters = distMeters;
+    supabase.from('walks').update({ distance_meters: distMeters }).eq('id', currentWalkData.id);
+
     // Remove old route layers/sources if they exist
     ['route-traveled', 'route-remaining'].forEach(id => {
       if (walkMap.getLayer(id)) walkMap.removeLayer(id);
@@ -781,9 +786,28 @@ setupAutocomplete('f-to',   coords => { toCoords   = coords; });
 async function endWalk(id) {
   if (!confirm('End this walk? It will be permanently deleted for everyone.')) return;
   try {
+    // Credit steps/miles to every participant before deleting the walk
+    const [{ data: walk }, { data: members }] = await Promise.all([
+      supabase.from('walks').select('distance_meters, created_by').eq('id', id).single(),
+      supabase.from('walk_members').select('user_id').eq('walk_id', id)
+    ]);
+
+    if (walk?.distance_meters) {
+      const miles = parseFloat((walk.distance_meters / 1609.34).toFixed(2));
+      const steps = Math.round(miles * 2000); // ~2 000 steps per mile
+
+      // Deduplicate: members + creator
+      const userIds = new Set((members || []).map(m => m.user_id));
+      userIds.add(walk.created_by);
+
+      await Promise.all([...userIds].map(userId =>
+        supabase.rpc('increment_walk_stats', { p_user_id: userId, p_steps: steps, p_miles: miles })
+      ));
+    }
+
     const { error } = await supabase.from('walks').delete().eq('id', id);
     if (error) throw error;
-    window.showToast?.('Walk ended', 'Your walk has been removed.');
+    window.showToast?.('Walk ended', 'Stats updated for all participants!');
     await loadWalks(currentFilter);
   } catch (err) {
     window.showToast?.('Could not end walk', err.message, true);

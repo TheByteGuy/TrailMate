@@ -99,6 +99,9 @@ function renderProfileData(profile) {
   document.getElementById('profile-username').textContent = '@' + profile.username;
   document.getElementById('profile-bio').textContent = profile.bio || '';
   document.getElementById('bio-textarea').value = profile.bio || '';
+
+  document.getElementById('stat-steps').textContent = (profile.total_steps ?? 0).toLocaleString();
+  document.getElementById('stat-miles').textContent = parseFloat(profile.total_miles ?? 0).toFixed(1);
 }
 
 // ---- LOAD FOLLOW COUNTS ----
